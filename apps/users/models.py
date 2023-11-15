@@ -4,7 +4,7 @@ from django.db import models
 
 class AuthUser(AbstractUser):
     """
-    用户基础模型
+    用户基础表
     """
     SEX_CODE = (
         (0, '男'),
