@@ -22,14 +22,14 @@ class TestCaseView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPI
         """
         if self.request.method == 'GET':
             return ListTestCaseSerializer
-        if self.request.method == 'POST':
+        if self.request.method == 'POST' or self.request.method == 'PUT':
             return CreateTestCaseSerializer
         else:
             return ListTestCaseSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = ListTestCaseSerializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
 
