@@ -82,7 +82,7 @@ class Precondition(BaseModel):
     case = models.ForeignKey('TestCase', on_delete=models.CASCADE, verbose_name='主用例')
 
     def __str__(self):
-        return f'{self.case}:{self.precondition_case}'
+        return self.precondition_case
 
     class Meta:
         verbose_name = '前置条件表'
