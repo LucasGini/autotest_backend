@@ -1,11 +1,18 @@
-from common.general_page import GeneralPage
-from common.custom_response import CustomResponse
-from apps.cases.serializers import ListTestCaseSerializer
-from apps.cases.serializers import CreateTestCaseSerializer
+from django.db import transaction
 from rest_framework import generics
 from rest_framework import status
-from apps.cases.models import TestCase, ProjectsInfo
-from rest_framework.exceptions import APIException, NotFound
+from rest_framework.exceptions import NotFound, APIException
+from common.general_page import GeneralPage
+from common.custom_response import CustomResponse
+from common.custom_model_viewset import CustomModelViewSet
+from common.utils.default_write import default_write
+from apps.cases.serializers import ListTestCaseSerializer
+from apps.cases.serializers import CreateTestCaseSerializer
+from apps.cases.serializers import ListProjectsInfoSerializer
+from apps.cases.serializers import CreateProjectsInfoSerializer
+from apps.cases.models import TestCase
+from apps.cases.models import Precondition
+from apps.cases.models import ProjectsInfo
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -13,7 +20,7 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
     测试用例列表创建视图类
     """
 
-    queryset = TestCase.objects.all()
+    queryset = TestCase.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
     serializer_class = ListTestCaseSerializer
 
@@ -23,7 +30,7 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
         """
         if self.request.method == 'GET':
             return ListTestCaseSerializer
-        if self.request.method == 'POST' or self.request.method == 'PUT':
+        if self.request.method == 'POST':
             return CreateTestCaseSerializer
         else:
             return ListTestCaseSerializer
@@ -61,7 +68,7 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
     测试用例详情更新删除视图类
     """
 
-    queryset = TestCase.objects.all()
+    queryset = TestCase.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
     serializer_class = ListTestCaseSerializer
 
@@ -71,18 +78,81 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
         """
         if self.request.method == 'GET':
             return ListTestCaseSerializer
-        if self.request.method == 'POST' or self.request.method == 'PUT':
+        if self.request.method == 'PUT':
             return CreateTestCaseSerializer
         else:
             return ListTestCaseSerializer
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        查询用例明细
+        """
         try:
             instance = self.get_queryset().get(id=kwargs.get('pk'))
         except Exception:
             raise NotFound('查询数据不存在')
         serializer = self.get_serializer(instance)
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        """
+        更新测试用例
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
+
+    @transaction.atomic()
+    def destroy(self, request, *args, **kwargs):
+        """
+        逻辑删除测试用例
+        """
+        # 开启事务
+        save_id = transaction.savepoint()
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            precondition = None
+            try:
+                precondition = Precondition.objects.get(case=instance.id)
+            except Precondition.DoesNotExist:
+                pass
+            if precondition:
+                self.perform_destroy(precondition)
+            # 提交事务
+            transaction.savepoint_commit(save_id)
+        except Exception as e:
+            # 事务回滚
+            transaction.savepoint_rollback(save_id)
+            raise APIException(e)
+        return CustomResponse(data=[], code=204, msg='OK', status=status.HTTP_200_OK)
+
+    def perform_destroy(self, instance):
+        instance.enable_flag = 0
+        instance.save()
+
+
+class ProjectsInfoModelViewSet(CustomModelViewSet):
+    """
+    项目视图集
+    """
+    queryset = ProjectsInfo.objects.filter(enable_flag=1)
+    pagination_class = GeneralPage
+    serializer_class = ListProjectsInfoSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_class
+        if self.action == 'create' or self.action == 'update':
+            return CreateProjectsInfoSerializer
+        else:
+            return self.serializer_class
+
+
 
 
 
