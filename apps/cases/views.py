@@ -101,7 +101,7 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial, context={"request": request})
-        serializer.is_valid(raise_exception=True)
+        serializer.is_valid()
         self.perform_update(serializer)
 
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
