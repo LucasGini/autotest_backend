@@ -2,10 +2,12 @@ from django.urls import path, include
 from apps.cases.views import ListCreateTestCaseView
 from apps.cases.views import RetrieveUpdateDestroyTestCaseAPIView
 from apps.cases.views import ProjectsInfoModelViewSet
+from apps.cases.views import TestSuiteModelViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('project', ProjectsInfoModelViewSet, basename='project')
+router.register('testsuite', TestSuiteModelViewSet, basename='test_suite')
 
 
 urlpatterns = [

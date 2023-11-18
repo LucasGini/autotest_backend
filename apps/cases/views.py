@@ -10,7 +10,10 @@ from apps.cases.serializers import ListTestCaseSerializer
 from apps.cases.serializers import CreateTestCaseSerializer
 from apps.cases.serializers import ListProjectsInfoSerializer
 from apps.cases.serializers import CreateProjectsInfoSerializer
+from apps.cases.serializers import ListTestSuiteSerializer
+from apps.cases.serializers import CreateTestSuiteSerializer
 from apps.cases.models import TestCase
+from apps.cases.models import TestSuite
 from apps.cases.models import Precondition
 from apps.cases.models import ProjectsInfo
 
@@ -56,8 +59,8 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
             ProjectsInfo.objects.get(id=data['project'])
         except Exception:
             raise NotFound('项目不存在，新增失败')
-        serializer = self.get_serializer(data=data,  context={"request": request})
-        serializer.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=data, context={"request": request})
+        serializer.is_valid()
         self.perform_create(serializer)
         header = self.get_success_headers(serializer.data)
         return CustomResponse(data=serializer.data, code=201, msg='OK', status=status.HTTP_201_CREATED, headers=header)
@@ -94,15 +97,44 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
         serializer = self.get_serializer(instance)
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
+    @transaction.atomic()
     def update(self, request, *args, **kwargs):
         """
         更新测试用例
         """
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', True)
+        data = request.data
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial, context={"request": request})
-        serializer.is_valid()
-        self.perform_update(serializer)
+        serializer = self.get_serializer(instance, data=data, partial=partial, context={'request': request})
+        # 开启事务
+        save_id = transaction.savepoint()
+        try:
+            if serializer.is_valid():
+                self.perform_update(serializer)
+            # 修改前置条件
+            precondition_data = request.data.pop('precondition', None)
+            # 如果precondition_data为空，则直接提交事务
+            if precondition_data is None:
+                transaction.savepoint_commit(save_id)
+                return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
+            try:
+                # 查询是否存在前置条件对象，不存在则新增，存在则修改
+                precondition = Precondition.objects.get(case=instance.id)
+                if isinstance(precondition_data, dict):
+                    for attr, value in precondition_data.items():
+                        setattr(precondition, attr, value)
+            except Precondition.DoesNotExist:
+                precondition = Precondition()
+                precondition.precondition_case = precondition_data.get('precondition_case', None)
+                precondition.case = instance
+            # 保存并提交事务
+            default_write(precondition, request)
+            default_write(instance, request)
+            transaction.savepoint_commit(save_id)
+        except Exception as e:
+            # 出现异常，回滚事务
+            transaction.savepoint_rollback(save_id)
+            raise APIException(e)
 
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
@@ -153,7 +185,19 @@ class ProjectsInfoModelViewSet(CustomModelViewSet):
             return self.serializer_class
 
 
+class TestSuiteModelViewSet(CustomModelViewSet):
+    """
+    测试套件视图集
+    """
+    queryset = TestSuite.objects.filter(enable_flag=1)
+    pagination_class = GeneralPage
+    serializer_class = ListTestSuiteSerializer
 
-
-
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_class
+        if self.action == 'create' or self.action == 'update':
+            return CreateTestSuiteSerializer
+        else:
+            return self.serializer_class
 

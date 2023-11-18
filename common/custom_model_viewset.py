@@ -33,7 +33,7 @@ class CustomModelViewSet(ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial, context={'request': request})
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
@@ -48,4 +48,8 @@ class CustomModelViewSet(ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return CustomResponse(data=[], code=204, msg='OK', status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance):
+        instance.enable_flag = 0
+        instance.save()
 
