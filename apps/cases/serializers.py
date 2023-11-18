@@ -162,7 +162,8 @@ class CreateTestCaseSerializer(serializers.ModelSerializer):
                         for attr, value in precondition_data.items():
                             setattr(precondition, attr, value)
             except Precondition.DoesNotExist:
-                precondition = Precondition.objects.create(**precondition_data)
+                precondition = Precondition()
+                precondition.precondition_case = precondition_data.get('precondition_case', None)
                 precondition.case = instance
                 precondition = default_write(precondition, request)
                 precondition.save()
