@@ -21,6 +21,7 @@ dependencies:
   - xz=5.4.2=h6c40b1e_0
   - zlib=1.2.13=h4dc903c_0
   - pip:
+      - ddt==1.7.0
       - djangorestframework==3.14.0
       - pytz==2023.3.post1
 prefix: /Users/lidongqiang/opt/anaconda3/envs/autotest_backend
