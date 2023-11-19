@@ -6,10 +6,10 @@ from apps.cases.models import TestSuite
 from django.db import transaction
 from rest_framework.exceptions import APIException
 from common.utils.default_write import default_write
-from django.db import connection
+from common.custom_model_serializer import CustomModelSerializer
 
 
-class ListProjectsInfoSerializer(serializers.ModelSerializer):
+class ListProjectsInfoSerializer(CustomModelSerializer):
     """
     前置条件表序列化器
     """
@@ -19,7 +19,7 @@ class ListProjectsInfoSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CreateProjectsInfoSerializer(serializers.ModelSerializer):
+class CreateProjectsInfoSerializer(CustomModelSerializer):
     """
     前置条件表序列化器
     """
@@ -41,7 +41,7 @@ class CreateProjectsInfoSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CreatePreconditionSerializer(serializers.ModelSerializer):
+class CreatePreconditionSerializer(CustomModelSerializer):
     """
     创建前置条件序列化器
     """
@@ -51,7 +51,7 @@ class CreatePreconditionSerializer(serializers.ModelSerializer):
         exclude = ('enable_flag', 'case', 'created_by', 'updated_by')
 
 
-class ListPreconditionSerializer(serializers.ModelSerializer):
+class ListPreconditionSerializer(CustomModelSerializer):
     """
     查询前置条件序列化器
     """
@@ -61,7 +61,7 @@ class ListPreconditionSerializer(serializers.ModelSerializer):
         exclude = ('case',)
 
 
-class ListTestCaseSerializer(serializers.ModelSerializer):
+class ListTestCaseSerializer(CustomModelSerializer):
     """
     查询测试用例序列化器
     """
@@ -85,7 +85,7 @@ class ListTestCaseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CreateTestCaseSerializer(serializers.ModelSerializer):
+class CreateTestCaseSerializer(CustomModelSerializer):
     """
     新增测试用例序列化器
     """
@@ -101,8 +101,6 @@ class CreateTestCaseSerializer(serializers.ModelSerializer):
         """
         创建测试用例
         """
-        # 开启事务
-        save_id = transaction.savepoint()
         try:
             request = self.context.get('request')
             # 新增测试用例
@@ -115,22 +113,13 @@ class CreateTestCaseSerializer(serializers.ModelSerializer):
                 precondition.precondition_case = precondition_data.get('precondition_case', None)
                 precondition.case = instance
                 default_write(precondition, request)
-            transaction.savepoint_commit(save_id)
         except Exception as e:
-            # 失败回滚
-            transaction.savepoint_rollback(save_id)
             raise APIException(e)
 
         return instance
 
-    def update(self, instance, validated_data):
-        super().update(instance, validated_data)
-        request = self.context.get('request')
-        default_write(instance, request)
-        return instance
 
-
-class ListTestSuiteSerializer(serializers.ModelSerializer):
+class ListTestSuiteSerializer(CustomModelSerializer):
     """
     测试套件序列表列化器
     """
@@ -147,7 +136,7 @@ class ListTestSuiteSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
-class CreateTestSuiteSerializer(serializers.ModelSerializer):
+class CreateTestSuiteSerializer(CustomModelSerializer):
     """
     测试套件序创建列化器
     """

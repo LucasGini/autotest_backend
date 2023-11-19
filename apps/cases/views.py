@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import generics
 from rest_framework import status
 from rest_framework.exceptions import NotFound, APIException
+from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
 from common.custom_response import CustomResponse
 from common.custom_model_viewset import CustomModelViewSet
@@ -106,8 +107,6 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
         data = request.data
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=data, partial=partial, context={'request': request})
-        # 开启事务
-        save_id = transaction.savepoint()
         try:
             if serializer.is_valid():
                 self.perform_update(serializer)
@@ -115,7 +114,6 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
             precondition_data = request.data.pop('precondition', None)
             # 如果precondition_data为空，则直接提交事务
             if precondition_data is None:
-                transaction.savepoint_commit(save_id)
                 return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
             try:
                 # 查询是否存在前置条件对象，不存在则新增，存在则修改
@@ -127,13 +125,9 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
                 precondition = Precondition()
                 precondition.precondition_case = precondition_data.get('precondition_case', None)
                 precondition.case = instance
-            # 保存并提交事务
             default_write(precondition, request)
             default_write(instance, request)
-            transaction.savepoint_commit(save_id)
         except Exception as e:
-            # 出现异常，回滚事务
-            transaction.savepoint_rollback(save_id)
             raise APIException(e)
 
         return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
@@ -143,23 +137,15 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
         """
         逻辑删除测试用例
         """
-        # 开启事务
-        save_id = transaction.savepoint()
         try:
             instance = self.get_object()
             self.perform_destroy(instance)
-            precondition = None
             try:
                 precondition = Precondition.objects.get(case=instance.id)
             except Precondition.DoesNotExist:
-                pass
-            if precondition:
-                self.perform_destroy(precondition)
-            # 提交事务
-            transaction.savepoint_commit(save_id)
+                return CustomResponse(data=[], code=204, msg='OK', status=status.HTTP_200_OK)
+            self.perform_destroy(precondition)
         except Exception as e:
-            # 事务回滚
-            transaction.savepoint_rollback(save_id)
             raise APIException(e)
         return CustomResponse(data=[], code=204, msg='OK', status=status.HTTP_200_OK)
 
@@ -201,3 +187,25 @@ class TestSuiteModelViewSet(CustomModelViewSet):
         else:
             return self.serializer_class
 
+    @transaction.atomic()
+    def update(self, request, *args, **kwargs):
+        # 重写以适配部分修改情况
+        instance = self.get_object()
+        data = request.data
+        serializer = self.get_serializer(instance, data=data, partial=True, context={'request': request})
+        suite_name = data.get('suite_name', None)
+        case = data.get('case', None)
+        serializer.is_valid()
+        # 用例集名称或用例为空的情况，不走序列化保存
+        if suite_name and case:
+            self.perform_update(serializer)
+        else:
+            try:
+                custom_update(instance, request)
+            except Exception as e:
+                raise APIException(e)
+        # 更新数据后，如果存在缓存则清除缓存
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
