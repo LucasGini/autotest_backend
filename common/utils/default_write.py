@@ -11,9 +11,12 @@ def caller_function_name():
     return caller_name
 
 
-def default_write(obj, request):
+def default_write(instance: object, request: object) -> object:
     """
-    创建时间等字段默认填写
+    自定义更新方法
+    :param instance: 模型实例
+    :param request: request
+    :return:
     """
     # 获取上级调用方法名
     caller_name = caller_function_name()
@@ -22,14 +25,14 @@ def default_write(obj, request):
         user = request.user
         # 如果登录了则通过对象获取用户名
         if isinstance(user, AuthUser):
-            if caller_name != 'update' or obj.created_by is None:
-                obj.created_by = user.username
-            obj.updated_by = user.username
+            if caller_name != 'update' or instance.created_by is None:
+                instance.created_by = user.username
+            instance.updated_by = user.username
         else:
-            if caller_name != 'update' or obj.created_by is None:
-                obj.created_by = user
-            obj.updated_by = user
-        obj.save()
-        return obj
+            if caller_name != 'update' or instance.created_by is None:
+                instance.created_by = user
+            instance.updated_by = user
+        instance.save()
+        return instance
     else:
-        return obj
+        return instance

@@ -1,3 +1,4 @@
+from rest_framework.exceptions import NotFound
 from common.custom_response import CustomResponse
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
@@ -26,7 +27,10 @@ class CustomModelViewSet(ModelViewSet):
         return CustomResponse(serializer.data, code=201, msg='OK', status=status.HTTP_201_CREATED, headers=headers)
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except Exception as e:
+            raise NotFound(e)
         serializer = self.get_serializer(instance)
         return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
@@ -34,7 +38,7 @@ class CustomModelViewSet(ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial, context={'request': request})
-        serializer.is_valid(raise_exception=True)
+        serializer.is_valid()
         self.perform_update(serializer)
 
         if getattr(instance, '_prefetched_objects_cache', None):
