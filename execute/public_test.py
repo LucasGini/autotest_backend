@@ -1,8 +1,5 @@
 import string
 import unittest
-import jsonpath
-import requests
-from ddt import ddt, unpack
 
 
 class PublicTestCase:
@@ -36,7 +33,11 @@ class PublicTestCase:
 '''
 
     code = '''
-class BaseTest(unittest.TestCase):
+import jsonpath
+import requests
+
+    
+class BaseTest${thread_id}(unittest.TestCase):
     """
     测试基类
     """
@@ -128,7 +129,9 @@ class BaseTest(unittest.TestCase):
         """
         输出最终拼接数据
         """
-        test_case = {'test_case': self.test_case_list()}
+        import threading
+        test_case = {'test_case': self.test_case_list(), 'thread_id': threading.get_ident()}
+        print(self.str_template(self.code, test_case))
         return self.str_template(self.code, test_case)
 
 
