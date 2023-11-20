@@ -1,5 +1,7 @@
 import string
 import unittest
+import requests
+import jsonpath
 
 
 class PublicTestCase:
@@ -125,14 +127,41 @@ class BaseTest${thread_id}(unittest.TestCase):
             params += param
         return params
 
-    def test_main(self):
+    def test_class(self):
         """
-        输出最终拼接数据
+        测试类拼接
         """
         import threading
         test_case = {'test_case': self.test_case_list(), 'thread_id': threading.get_ident()}
-        print(self.str_template(self.code, test_case))
+        # thread_id避免类冲突
         return self.str_template(self.code, test_case)
+
+    def test_main(self):
+        """
+        测试主方法
+        """
+        import threading
+        import gc
+        test_class = self.test_class()
+        # 将动态代码加载到内存
+        exec(test_class)
+        print("Thread ID:", threading.get_ident())
+        class_name = 'BaseTest' + str(threading.get_ident())
+        BaseTest = None
+        # 从内存中获取测试类对象
+        for obj in gc.get_objects():
+            if isinstance(obj, type):
+                if obj.__name__ == class_name:
+                    BaseTest = obj
+        # 创建测试套件
+        # unittest.main()
+        print(BaseTest)
+        if BaseTest:
+            suite = unittest.TestLoader().loadTestsFromTestCase(BaseTest)
+            # 创建测试运行器
+            runner = unittest.TextTestRunner()
+            # 执行测试套件
+            runner.run(suite)
 
 
 if __name__ == '__main__':
@@ -153,6 +182,4 @@ if __name__ == '__main__':
                    {'assertEqual': {'path': '$.data', 'value': 'False', 'msg': '比对不正确'}}]
     }
     datas = [datas1, datas2]
-    pt = PublicTestCase(datas)
-    exec(pt.test_main())
-    unittest.main()
+    PublicTestCase(datas).test_main()
