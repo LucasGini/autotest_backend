@@ -1,4 +1,5 @@
 import string
+import threading
 import unittest
 import requests
 import jsonpath
@@ -116,7 +117,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         data = string.Template(body).safe_substitute(var)
         return data
 
-    def test_case_list(self):
+    def test_case(self):
         """
         测试用例拼接
         """
@@ -131,8 +132,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         """
         测试类拼接
         """
-        import threading
-        test_case = {'test_case': self.test_case_list(), 'thread_id': threading.get_ident()}
+        test_case = {'test_case': self.test_case(), 'thread_id': threading.get_ident()}
         # thread_id避免类冲突
         return self.str_template(self.code, test_case)
 
