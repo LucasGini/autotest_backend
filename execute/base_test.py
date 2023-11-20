@@ -1,23 +1,41 @@
+import string
 import unittest
 import jsonpath
 import requests
-from ddt import ddt, data, unpack
-
-datas1 = {
-    'header': {"User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
-    'url': "https://api.douban.com/v2/user/:name",
-    'method': 'GET',
-    'verify': [{'assertEqual': {'path': '$.data', 'value': False, 'msg': '请求异常'}}]
-}
-datas2 = {
-    'header': {"User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
-    'url': "https://api.douban.com/v2/user/:name",
-    'method': 'GET',
-    'verify': [{'assertEqual': {'path': '$.data', 'value': 'False', 'msg': '请求异常'}}]
-}
+from ddt import ddt, unpack
 
 
-@ddt
+class PublicTestCase:
+    """
+    公共测试类
+    """
+
+    case = '''
+    def test_${index}(self):
+        value=${data}
+        header = value.get('header', None)
+        url = value.get('url', None)
+        param = value.get('param', None)
+        method = value.get('method', None)
+        verify = value.get('verify', None)
+        if header and url:
+            response = requests.request(method=method, url=url, params=param, headers=header)
+            data_json = response.json()
+            if verify:
+                if isinstance(verify, list):
+                    for ver in verify:
+                        if isinstance(ver, dict):
+                            for ass, d in ver.items():
+                                v0, v1, v2 = None, None, None
+                                if isinstance(d, dict):
+                                    path = d.get('path', None)
+                                    v0 = jsonpath.jsonpath(data_json, path)
+                                    v1 = d.get('value', None)
+                                    v2 = d.get('msg', None)
+                                self.get_assert(ass, v0, v1, v2)
+'''
+
+    code = '''
 class BaseTest(unittest.TestCase):
     """
     测试基类
@@ -73,34 +91,65 @@ class BaseTest(unittest.TestCase):
     def setUp(self):
         pass
 
-    @data([datas1, datas2])
-    def test_base(self, values):
-        for value in values:
-            header = value.get('header', None)
-            url = value.get('url', None)
-            param = value.get('param', None)
-            method = value.get('method', None)
-            verify = value.get('verify', None)
-            if header and url:
-                response = requests.request(method=method, url=url, params=param, headers=header)
-                data_json = response.json()
-                print(data_json)
-                if verify:
-                    if isinstance(verify, list):
-                        for ver in verify:
-                            if isinstance(ver, dict):
-                                for ass, d in ver.items():
-                                    v0, v1, v2 = None, None, None
-                                    if isinstance(d, dict):
-                                        path = d.get('path', None)
-                                        v0 = jsonpath.jsonpath(data_json, path)
-                                        v1 = d.get('value', None)
-                                        v2 = d.get('msg', None)
-                                    self.get_assert(ass, v0, v1, v2)
-
     def tearDown(self):
         pass
+    
+    ${test_case}
+'''
+
+    def __init__(self, case_list):
+        self.case_list = case_list
+
+    @staticmethod
+    def str_template(body: str, var: dict) -> any:
+        """
+        字符串模板插入并返回相应对象
+        param: body 字符串
+        param: var 插入值（字典，key需要与body中标记的key一致）
+        """
+        # 初始化
+        false, true, null = False, True, ''
+        # 字符串模板插入
+        data = string.Template(body).safe_substitute(var)
+        return data
+
+    def test_case_list(self):
+        """
+        测试用例拼接
+        """
+        params = """"""
+        for index, data in enumerate(self.case_list):
+            dict_data = {'index': index, 'data': data}
+            param = self.str_template(self.case, dict_data)
+            params += param
+        return params
+
+    def test_main(self):
+        """
+        输出最终拼接数据
+        """
+        test_case = {'test_case': self.test_case_list()}
+        return self.str_template(self.code, test_case)
 
 
 if __name__ == '__main__':
+    datas1 = {
+        'header': {
+            "User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
+        'url': "https://api.douban.com/v2/user/:name",
+        'method': 'GET',
+        'verify': [{'assertEqual': {'path': '$.data', 'value': False, 'msg': '比对不正确'}},
+                   {'assertEqual': {'path': '$.data', 'value': False, 'msg': '比对不正确'}}]
+    }
+    datas2 = {
+        'header': {
+            "User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
+        'url': "https://api.douban.com/v2/user/:name",
+        'method': 'GET',
+        'verify': [{'assertEqual': {'path': '$.data', 'value': False, 'msg': '比对不正确'}},
+                   {'assertEqual': {'path': '$.data', 'value': 'False', 'msg': '比对不正确'}}]
+    }
+    datas = [datas1, datas2]
+    pt = PublicTestCase(datas)
+    exec(pt.test_main())
     unittest.main()
