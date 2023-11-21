@@ -1,8 +1,12 @@
+import json
 import string
 import threading
 import unittest
 import requests
 import jsonpath
+from apps.cases.models import Precondition
+from common.const.basic_const import AGREEMENT_CONST
+from common.const.case_const import METHOD_CONST
 
 
 class PublicTestCase:
@@ -12,12 +16,13 @@ class PublicTestCase:
 
     case = '''
     def test_${index}(self):
-        value=${data}
+        value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
         param = value.get('param', None)
         method = value.get('method', None)
         verify = value.get('verify', None)
+        fetch = value.get('fetch', None)
         if header and url:
             response = requests.request(method=method, url=url, params=param, headers=header)
             data_json = response.json()
@@ -46,6 +51,7 @@ class PublicTestCase:
     code = '''
 import jsonpath
 import requests
+from apps.cases.models import Precondition
 
     
 class BaseTest${thread_id}(unittest.TestCase):
@@ -136,8 +142,51 @@ class BaseTest${thread_id}(unittest.TestCase):
     ${test_case}
 '''
 
-    def __init__(self, case_list):
+    def __init__(self, case_list, test_env):
         self.case_list = case_list
+        self.test_env = test_env
+
+    def build_case_info(self, instance):
+        """
+        构建用例信息
+        :param instance: case实例
+        :return: case_info
+        """
+        case_info = {}
+        try:
+            precondition_obj = Precondition.objects.get(case=instance.id, enable_flag=1)
+            precondition = precondition_obj.precondition_case
+        except Precondition.DoesNotExist:
+            precondition = None
+        case_info['precondition'] = precondition
+        case_info['method'] = METHOD_CONST[instance.method]
+        case_info['url'] = self.build_test_url(instance)
+        data = eval(instance.data)
+        if isinstance(data, dict):
+            case_info['header'] = data.get('header', None)
+            case_info['param'] = data.get('param', None)
+            case_info['verify'] = data.get('verify', None)
+            case_info['fetch'] = data.get('fetch', None)
+        else:
+            raise Exception('用例数据格式不正确')
+        return case_info
+
+    def build_test_url(self, case):
+        """
+        构建测试url
+        :param case: 用例实例
+        :return: url
+        """
+        agreement = AGREEMENT_CONST[self.test_env.agreement]
+        hosts = str(self.test_env.hosts)
+        port = str(self.test_env.port)
+        path = str(case.path)
+        if port:
+            url = agreement + '://' + hosts + ':' + port + path
+        else:
+            url = agreement + '://' + hosts + path
+
+        return url
 
     @staticmethod
     def str_template(body: str, var: dict) -> any:
@@ -157,8 +206,9 @@ class BaseTest${thread_id}(unittest.TestCase):
         测试用例拼接
         """
         params = """"""
-        for index, data in enumerate(self.case_list):
-            dict_data = {'index': index, 'data': data}
+        for index, instance in enumerate(self.case_list):
+            case_info = self.build_case_info(instance)
+            dict_data = {'index': index, 'case_info': case_info}
             param = self.str_template(self.case, dict_data)
             params += param
         return params
@@ -167,7 +217,10 @@ class BaseTest${thread_id}(unittest.TestCase):
         """
         测试类拼接
         """
-        test_case = {'test_case': self.test_case(), 'thread_id': threading.get_ident()}
+        test_case = {
+            'test_case': self.test_case(),
+            'thread_id': threading.get_ident()
+        }
         # thread_id避免类冲突
         return self.str_template(self.code, test_case)
 
@@ -201,21 +254,11 @@ class BaseTest${thread_id}(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    datas1 = {
-        'header': {
-            "User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
-        'url': "https://api.douban.com/v2/user/:name",
-        'method': 'GET',
-        'verify': [{'assertEqual': {'path': '$.data', 'types': 'bool', 'value': False, 'msg': '比对不正确'}},
-                   {'assertEqual': {'path': '$.data', 'types': 'bool', 'value': False, 'msg': '比对不正确'}}]
-    }
-    datas2 = {
-        'header': {
-            "User-Agent": "Mozilla/5.0 (Windows NT 00.0; Win64; x64) AppleWebKit/527.26 (KHTML, like Gecko) Chrome/54.0.1840.99 Safari/527.26"},
-        'url': "https://api.douban.com/v2/user/:name",
-        'method': 'GET',
-        'verify': [{'assertEqual': {'path': '$.data', 'types': 'bool', 'value': False, 'msg': '比对不正确'}},
-                   {'assertEqual': {'path': '$.data', 'types': 'bool', 'value': 'False', 'msg': '比对不正确'}}]
-    }
-    datas = [datas1, datas2]
-    PublicTestCase(datas).test_main()
+    from apps.cases.models import TestCase
+    from apps.basics.models import TestEnv
+    env = TestEnv.objects.get(id=1, enable_flag=1)
+    queryset = TestCase.objects.all().filter(enable_flag=1)
+    datas = []
+    for i in queryset:
+        datas.append(i)
+    PublicTestCase(datas, env).test_main()
