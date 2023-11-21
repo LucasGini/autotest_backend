@@ -1,7 +1,10 @@
 from django.db import transaction
 from rest_framework import generics
 from rest_framework import status
+from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
+
+from apps.basics.models import TestEnv
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
 from common.custom_response import CustomResponse
@@ -17,6 +20,7 @@ from apps.cases.models import TestCase
 from apps.cases.models import TestSuite
 from apps.cases.models import Precondition
 from apps.cases.models import ProjectsInfo
+from execute.public_test import PublicTestCase
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -209,3 +213,18 @@ class TestSuiteModelViewSet(CustomModelViewSet):
             instance._prefetched_objects_cache = {}
 
         return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
+
+
+class ExecuteView(views.APIView):
+    """
+    执行接口
+    """
+
+    def get(self, request, *args, **kwargs):
+        env = TestEnv.objects.get(id=1, enable_flag=1)
+        queryset = TestCase.objects.all().filter(enable_flag=1)
+        datas = []
+        for i in queryset:
+            datas.append(i)
+        PublicTestCase(datas, env).test_main()
+        return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)

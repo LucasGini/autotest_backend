@@ -1,5 +1,5 @@
 from django.urls import path, include
-from apps.cases.views import ListCreateTestCaseView
+from apps.cases.views import ListCreateTestCaseView, ExecuteView
 from apps.cases.views import RetrieveUpdateDestroyTestCaseAPIView
 from apps.cases.views import ProjectsInfoModelViewSet
 from apps.cases.views import TestSuiteModelViewSet
@@ -13,5 +13,6 @@ router.register('testsuite', TestSuiteModelViewSet, basename='test_suite')
 urlpatterns = [
     path('testcase/', ListCreateTestCaseView.as_view(), name='test_case'),
     path('testcase/<int:pk>', RetrieveUpdateDestroyTestCaseAPIView.as_view(), name='test_case_detail'),
+    path('execute/', ExecuteView.as_view(), name='execute'),
     path('', include(router.urls))
 ]
