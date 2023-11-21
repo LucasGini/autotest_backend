@@ -24,20 +24,23 @@ class PublicTestCase:
             if verify:
                 if isinstance(verify, list):
                     for ver in verify:
-                        if isinstance(ver, dict):
+                        if isinstance(ver, dict) and len(ver) == 1:
                             for ass, d in ver.items():
                                 v0, v1, v2 = None, None, None
                                 if isinstance(d, dict):
                                     path = d.get('path', None)
                                     types = d.get('types', None)
                                     value = d.get('value', None)
-                                    if path is not None and types is not None and value is not None:
+                                    if path is not None:
                                         v0 = jsonpath.jsonpath(data_json, path)
-                                        v1 =  self.get_data_type(types, value)
-                                        v2 = d.get('msg', None)
                                     else:
                                         raise Exception('断言规则不正确')
+                                    if types is not None and value is not None:
+                                        v1 =  self.get_data_type(types, value)
+                                    v2 = d.get('msg', None)
                                 self.get_assert(ass, v0, v1, v2)
+                        else:
+                            raise Exception('断言规则格式不正确')
 '''
 
     code = '''
@@ -87,17 +90,17 @@ class BaseTest${thread_id}(unittest.TestCase):
         if ass == 'assertNotEqual':
             return self.assertNotEqual(args[0], args[1], args[2])
         if ass == 'assertTrue':
-            return self.assertTrue(args[0], args[1])
+            return self.assertTrue(args[0], args[2])
         if ass == 'assertFalse':
-            return self.assertFalse(args[0], args[1])
+            return self.assertFalse(args[0], args[2])
         if ass == 'assertIs':
             return self.assertIs(args[0], args[1], args[2])
         if ass == 'assertIsNot':
             return self.assertIsNot(args[0], args[1], args[2])
         if ass == 'assertIsNone':
-            return self.assertIsNone(args[0], args[1])
+            return self.assertIsNone(args[0], args[2])
         if ass == 'assertIsNotNone':
-            return self.assertIsNotNone(args[0], args[1])
+            return self.assertIsNotNone(args[0], args[2])
         if ass == 'assertIn':
             return self.assertIn(args[0], args[1], args[2])
         if ass == 'assertNotIn':
