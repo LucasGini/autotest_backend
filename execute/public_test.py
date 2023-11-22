@@ -21,10 +21,11 @@ class PublicTestCase:
         url = value.get('url', None)
         param = value.get('param', None)
         method = value.get('method', None)
+        body = value.get('body', None)
         verify = value.get('verify', None)
         fetch = value.get('fetch', None)
         if header and url:
-            response = requests.request(method=method, url=url, params=param, headers=header)
+            response = requests.request(method=method, url=url, params=param, data=body, headers=header)
             data_json = response.json()
             if verify:
                 if isinstance(verify, list):
@@ -165,10 +166,12 @@ class BaseTest${thread_id}(unittest.TestCase):
         if isinstance(data, dict):
             case_info['header'] = data.get('header', None)
             case_info['param'] = data.get('param', None)
+            case_info['body'] = data.get('body', None)
             case_info['verify'] = data.get('verify', None)
             case_info['fetch'] = data.get('fetch', None)
         else:
             raise Exception('用例数据格式不正确')
+        print(case_info)
         return case_info
 
     def build_test_url(self, case):
