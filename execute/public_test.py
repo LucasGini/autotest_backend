@@ -4,6 +4,7 @@ import threading
 import unittest
 import requests
 import jsonpath
+import aiohttp
 from apps.cases.models import Precondition
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
@@ -15,17 +16,18 @@ class PublicTestCase:
     """
 
     case = '''
-    def test_${index}(self):
+    async def test_${index}(self):
         value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
         param = value.get('param', None)
         method = value.get('method', None)
+        body = value.get('body', None)
         verify = value.get('verify', None)
         fetch = value.get('fetch', None)
         if header and url:
-            response = requests.request(method=method, url=url, params=param, headers=header)
-            data_json = response.json()
+            response = await self.session.request(method=method, url=url, params=param, data=body, headers=header)
+            data_json = await response.json()
             if verify:
                 if isinstance(verify, list):
                     for ver in verify:
@@ -41,9 +43,9 @@ class PublicTestCase:
                                     else:
                                         raise Exception('断言规则不正确')
                                     if types is not None and value is not None:
-                                        v1 =  self.get_data_type(types, value)
+                                        v1 =  await self.get_data_type(types, value)
                                     v2 = d.get('msg', None)
-                                self.get_assert(ass, v0, v1, v2)
+                                await self.get_assert(ass, v0, v1, v2)
                         else:
                             raise Exception('断言规则格式不正确')
 '''
@@ -51,22 +53,24 @@ class PublicTestCase:
     code = '''
 import jsonpath
 import requests
+import aiohttp
+import unittest
 from apps.cases.models import Precondition
 
-    
-class BaseTest${thread_id}(unittest.TestCase):
+
+class BaseTest${thread_id}(unittest.IsolatedAsyncioTestCase):
     """
     测试基类
     """
-    
-    def get_data_type(self, type, value):
+
+    async def get_data_type(self, type, value):
         """
         将数据转换为对应类型
         :param type: 数据类型
         :param value: 需要转换的数据
         :return: 转换后的数据
         """
-        
+
         if type == 'int':
             return int(value)
         if type == 'float':
@@ -85,7 +89,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             return dict(value)
         raise Exception('不存在该种数据类型')
 
-    def get_assert(self, ass, *args):
+    async def get_assert(self, ass, *args):
         """
         获取断言方法
         :param ass:  断言类型
@@ -133,12 +137,12 @@ class BaseTest${thread_id}(unittest.TestCase):
             return self.assertNotRegex(args[0], args[1], args[2])
         raise Exception('不存在该种断言类型')
 
-    def setUp(self):
-        pass
+    async def asyncSetUp(self):
+        self.session = aiohttp.ClientSession()
 
-    def tearDown(self):
-        pass
-    
+    async def asyncTearDown(self):
+        await self.session.close()
+
     ${test_case}
 '''
 
@@ -165,6 +169,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         if isinstance(data, dict):
             case_info['header'] = data.get('header', None)
             case_info['param'] = data.get('param', None)
+            case_info['body'] = data.get('body', None)
             case_info['verify'] = data.get('verify', None)
             case_info['fetch'] = data.get('fetch', None)
         else:
@@ -256,6 +261,7 @@ class BaseTest${thread_id}(unittest.TestCase):
 if __name__ == '__main__':
     from apps.cases.models import TestCase
     from apps.basics.models import TestEnv
+
     env = TestEnv.objects.get(id=1, enable_flag=1)
     queryset = TestCase.objects.all().filter(enable_flag=1)
     datas = []
