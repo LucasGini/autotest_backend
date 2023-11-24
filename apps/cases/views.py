@@ -3,7 +3,6 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
-
 from apps.basics.models import TestEnv
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
@@ -21,6 +20,7 @@ from apps.cases.models import TestSuite
 from apps.cases.models import Precondition
 from apps.cases.models import ProjectsInfo
 from execute.public_test import PublicTestCase
+from apps.cases.task import run_case
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -223,8 +223,8 @@ class ExecuteView(views.APIView):
     def get(self, request, *args, **kwargs):
         env = TestEnv.objects.get(id=1, enable_flag=1)
         queryset = TestCase.objects.all().filter(enable_flag=1)
-        datas = []
+        cases = []
         for i in queryset:
-            datas.append(i)
-        PublicTestCase(datas, env).test_main()
+            cases.append(i)
+        run_case.delay(cases, env)
         return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
