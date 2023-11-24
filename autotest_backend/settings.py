@@ -126,3 +126,33 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'common.custom_exception.custom_exception_handler'
 }
+
+# 配置 Celery
+# Broker配置,使用redis作为消息中间件
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# backend配置，这里使用redis
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+CELERY_TASK_SERIALIZER = 'pickle'
+
+CELERY_RESULT_SERIALIZER = 'pickle'
+
+CELERY_ACCEPT_CONTENT = ['pickle', 'json']
+
+# 任务结果过期时间，秒
+CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
+
+# 时区设置
+CELERY_TIMEZONE = 'Asia/Shanghai'
+
+# 配置 Redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}

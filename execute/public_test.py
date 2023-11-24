@@ -253,7 +253,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         if base_test:
             suite = unittest.TestLoader().loadTestsFromTestCase(base_test)
             # 创建测试运行器
-            runner = unittest.TextTestRunner()
+            runner = unittest.TextTestRunner(verbosity=2)
             # 执行测试套件
             runner.run(suite)
 
