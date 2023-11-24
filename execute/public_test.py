@@ -16,7 +16,7 @@ class PublicTestCase:
     """
 
     case = '''
-    async def test_${index}(self):
+    def test_${index}(self):
         value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
@@ -26,8 +26,8 @@ class PublicTestCase:
         verify = value.get('verify', None)
         fetch = value.get('fetch', None)
         if header and url:
-            response = await self.session.request(method=method, url=url, params=param, data=body, headers=header)
-            data_json = await response.json()
+            response = requests.request(method=method, url=url, params=param, data=body, headers=header)
+            data_json = response.json()
             if verify:
                 if isinstance(verify, list):
                     for ver in verify:
@@ -43,9 +43,9 @@ class PublicTestCase:
                                     else:
                                         raise Exception('断言规则不正确')
                                     if types is not None and value is not None:
-                                        v1 =  await self.get_data_type(types, value)
+                                        v1 = self.get_data_type(types, value)
                                     v2 = d.get('msg', None)
-                                await self.get_assert(ass, v0, v1, v2)
+                                self.get_assert(ass, v0, v1, v2)
                         else:
                             raise Exception('断言规则格式不正确')
 '''
@@ -58,12 +58,12 @@ import unittest
 from apps.cases.models import Precondition
 
 
-class BaseTest${thread_id}(unittest.IsolatedAsyncioTestCase):
+class BaseTest${thread_id}(unittest.TestCase):
     """
     测试基类
     """
 
-    async def get_data_type(self, type, value):
+    def get_data_type(self, type, value):
         """
         将数据转换为对应类型
         :param type: 数据类型
@@ -89,7 +89,7 @@ class BaseTest${thread_id}(unittest.IsolatedAsyncioTestCase):
             return dict(value)
         raise Exception('不存在该种数据类型')
 
-    async def get_assert(self, ass, *args):
+    def get_assert(self, ass, *args):
         """
         获取断言方法
         :param ass:  断言类型
@@ -137,11 +137,11 @@ class BaseTest${thread_id}(unittest.IsolatedAsyncioTestCase):
             return self.assertNotRegex(args[0], args[1], args[2])
         raise Exception('不存在该种断言类型')
 
-    async def asyncSetUp(self):
-        self.session = aiohttp.ClientSession()
+    def SetUp(self):
+        pass
 
-    async def asyncTearDown(self):
-        await self.session.close()
+    def TearDown(self):
+        pass
 
     ${test_case}
 '''

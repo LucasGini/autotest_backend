@@ -3,7 +3,6 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
-
 from apps.basics.models import TestEnv
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
