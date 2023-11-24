@@ -1,10 +1,6 @@
-import json
 import string
 import threading
 import unittest
-import requests
-import jsonpath
-import aiohttp
 from apps.cases.models import Precondition
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
@@ -23,31 +19,40 @@ class PublicTestCase:
         param = value.get('param', None)
         method = value.get('method', None)
         body = value.get('body', None)
+        if body:
+            body = json.dumps(body)
         verify = value.get('verify', None)
         fetch = value.get('fetch', None)
-        if header and url:
-            response = requests.request(method=method, url=url, params=param, data=body, headers=header)
-            data_json = response.json()
-            if verify:
-                if isinstance(verify, list):
-                    for ver in verify:
-                        if isinstance(ver, dict) and len(ver) == 1:
-                            for ass, d in ver.items():
-                                v0, v1, v2 = None, None, None
-                                if isinstance(d, dict):
-                                    path = d.get('path', None)
-                                    types = d.get('types', None)
-                                    value = d.get('value', None)
-                                    if path is not None:
-                                        v0 = jsonpath.jsonpath(data_json, path)
-                                    else:
-                                        raise Exception('断言规则不正确')
-                                    if types is not None and value is not None:
-                                        v1 = self.get_data_type(types, value)
-                                    v2 = d.get('msg', None)
-                                self.get_assert(ass, v0, v1, v2)
-                        else:
-                            raise Exception('断言规则格式不正确')
+        # 请求头、url、请求方法不为空才发起请求
+        if header and url and method:
+            raise Exception('请求头、url或者请求方法为空')
+        response = requests.request(method=method, url=url, params=param, data=body, headers=header)
+        data_json = response.json()
+        # 断言规则不为空，则进行断言
+        if verify: 
+            if isinstance(verify, list) is False:
+                raise Exception('断言规则不为list类型')
+            # 遍历所有断言规则
+            for ver in verify:
+                if isinstance(ver, dict) is False:
+                    raise Exception('断言子规则不为dict类型')
+                for ass, d in ver.items():
+                    v0, v1, v2 = None, None, None
+                    if isinstance(d, dict) is false:
+                        raise Exception('断言规则定义不为dict类型')
+                    path = d.get('path', None)
+                    types = d.get('types', None)
+                    value = d.get('value', None)
+                    if path is not None:
+                        v0 = jsonpath.jsonpath(data_json, path)
+                    if types is not None and value is not None:
+                        v1 = self.get_data_type(types, value)
+                    v2 = d.get('msg', None)
+                self.get_assert(ass, v0, v1, v2)
+        # 取值规则不为空，则进行取值
+        if fetch: 
+            if isinstance(verify, list) is False:
+                raise Exception('取值规则不为list类型')
 '''
 
     code = '''
