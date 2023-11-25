@@ -169,15 +169,14 @@ class BaseTest${thread_id}(unittest.TestCase):
         except Precondition.DoesNotExist:
             precondition_case_ids = []
         precondition_cases = []
-        if precondition_case_ids:
-            if isinstance(precondition_case_ids, list):
-                for case_id in precondition_case_ids:
-                    try:
-                        case_obj = TestCase.objects.get(id=case_id)
-                        # 递归获取构建前置用例
-                        precondition_cases.append(self.build_case_info(case_obj, level + 1))
-                    except Precondition.DoesNotExist:
-                        pass
+        if precondition_case_ids and isinstance(precondition_case_ids, list):
+            for case_id in precondition_case_ids:
+                try:
+                    case_obj = TestCase.objects.get(id=case_id)
+                    # 递归获取构建前置用例
+                    precondition_cases.append(self.build_case_info(case_obj, level + 1))
+                except Precondition.DoesNotExist:
+                    pass
         case_info['precondition'] = precondition_cases
         case_info['method'] = METHOD_CONST[instance.method]
         case_info['url'] = self.build_test_url(instance)
