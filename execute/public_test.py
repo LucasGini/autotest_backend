@@ -1,7 +1,10 @@
+import sys
 import string
 import threading
 import unittest
-from apps.cases.models import Precondition
+import requests
+import jsonpath
+from apps.cases.models import Precondition, TestCase
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
 
@@ -12,7 +15,7 @@ class PublicTestCase:
     """
 
     case = '''
-    def test_${index}(self):
+    def test_case_${index}(self):
         value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
@@ -24,7 +27,7 @@ class PublicTestCase:
         verify = value.get('verify', None)
         fetch = value.get('fetch', None)
         # 请求头、url、请求方法不为空才发起请求
-        if header and url and method:
+        if header is None or url is None or method is None:
             raise Exception('请求头、url或者请求方法为空')
         response = requests.request(method=method, url=url, params=param, data=body, headers=header)
         data_json = response.json()
@@ -38,7 +41,7 @@ class PublicTestCase:
                     raise Exception('断言子规则不为dict类型')
                 for ass, d in ver.items():
                     v0, v1, v2 = None, None, None
-                    if isinstance(d, dict) is false:
+                    if isinstance(d, dict) is False:
                         raise Exception('断言规则定义不为dict类型')
                     path = d.get('path', None)
                     types = d.get('types', None)
@@ -56,13 +59,6 @@ class PublicTestCase:
 '''
 
     code = '''
-import jsonpath
-import requests
-import aiohttp
-import unittest
-from apps.cases.models import Precondition
-
-
 class BaseTest${thread_id}(unittest.TestCase):
     """
     测试基类
@@ -155,19 +151,34 @@ class BaseTest${thread_id}(unittest.TestCase):
         self.case_list = case_list
         self.test_env = test_env
 
-    def build_case_info(self, instance):
+    def build_case_info(self, instance, level=0, max_depth=3):
         """
         构建用例信息
+        :param max_depth: 设置最大递归深度,默认3
+        :param level: 递归深度
         :param instance: case实例
         :return: case_info
         """
+        if level > max_depth:
+            return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
         case_info = {}
         try:
-            precondition_obj = Precondition.objects.get(case=instance.id, enable_flag=1)
-            precondition = precondition_obj.precondition_case
+            precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
+            precondition_case_ids = eval(precondition_obj.precondition_case)
+            print(precondition_case_ids, type(precondition_case_ids))
         except Precondition.DoesNotExist:
-            precondition = None
-        case_info['precondition'] = precondition
+            precondition_case_ids = []
+        precondition_cases = []
+        if precondition_case_ids:
+            if isinstance(precondition_case_ids, list):
+                for case_id in precondition_case_ids:
+                    try:
+                        case_obj = TestCase.objects.get(id=case_id)
+                        # 递归获取构建前置用例
+                        precondition_cases.append(self.build_case_info(case_obj, level + 1))
+                    except Precondition.DoesNotExist:
+                        pass
+        case_info['precondition'] = precondition_cases
         case_info['method'] = METHOD_CONST[instance.method]
         case_info['url'] = self.build_test_url(instance)
         data = eval(instance.data)
@@ -179,6 +190,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             case_info['fetch'] = data.get('fetch', None)
         else:
             raise Exception('用例数据格式不正确')
+        print(case_info)
         return case_info
 
     def build_test_url(self, case):

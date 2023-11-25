@@ -19,7 +19,6 @@ from apps.cases.models import TestCase
 from apps.cases.models import TestSuite
 from apps.cases.models import Precondition
 from apps.cases.models import ProjectsInfo
-from execute.public_test import PublicTestCase
 from apps.cases.task import run_case
 
 
