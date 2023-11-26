@@ -1,3 +1,4 @@
+import json
 import sys
 import string
 import threading
@@ -22,6 +23,11 @@ class PublicTestCase:
         param = value.get('param', None)
         method = value.get('method', None)
         body = value.get('body', None)
+        preconditions = value.get('preconditions', None)
+        # 判断是否存在前置用例，如果存在前置用例，则递归执行所有前置用例，获取依赖值
+        if preconditions and isinstance(preconditions, list):
+            for p in preconditions:
+                self.precondition_case(p)
         if body:
             body = json.dumps(body)
         verify = value.get('verify', None)
@@ -53,9 +59,13 @@ class PublicTestCase:
                     v2 = d.get('msg', None)
                 self.get_assert(ass, v0, v1, v2)
         # 取值规则不为空，则进行取值
-        if fetch: 
-            if isinstance(verify, list) is False:
+        if fetch:
+            if isinstance(fetch, list) is False:
                 raise Exception('取值规则不为list类型')
+            else:
+                for f in fetch:
+                    for key, f_path in f.items():
+                        self.var[key] = jsonpath.jsonpath(data_json, f_path)
 '''
 
     code = '''
@@ -63,6 +73,60 @@ class BaseTest${thread_id}(unittest.TestCase):
     """
     测试基类
     """
+    
+    def precondition_case(self, value):
+        """
+        前置用例执行方法
+        :param value: 测试用例
+        :return: 
+        """
+        header = value.get('header', None)
+        url = value.get('url', None)
+        param = value.get('param', None)
+        method = value.get('method', None)
+        body = value.get('body', None)
+        preconditions = value.get('preconditions', None)
+        if preconditions and isinstance(preconditions, list):
+            for p in preconditions:
+                self.precondition_case(p)
+        if body:
+            body = json.dumps(body)
+        verify = value.get('verify', None)
+        fetch = value.get('fetch', None)
+        # 请求头、url、请求方法不为空才发起请求
+        if header is None or url is None or method is None:
+            raise Exception('请求头、url或者请求方法为空')
+        response = requests.request(method=method, url=url, params=param, data=body, headers=header)
+        data_json = response.json()
+        # 断言规则不为空，则进行断言
+        if verify:
+            if isinstance(verify, list) is False:
+                raise Exception('断言规则不为list类型')
+            # 遍历所有断言规则
+            for ver in verify:
+                if isinstance(ver, dict) is False:
+                    raise Exception('断言子规则不为dict类型')
+                for ass, d in ver.items():
+                    v0, v1, v2 = None, None, None
+                    if isinstance(d, dict) is False:
+                        raise Exception('断言规则定义不为dict类型')
+                    path = d.get('path', None)
+                    types = d.get('types', None)
+                    value = d.get('value', None)
+                    if path is not None:
+                        v0 = jsonpath.jsonpath(data_json, path)
+                    if types is not None and value is not None:
+                        v1 = self.get_data_type(types, value)
+                    v2 = d.get('msg', None)
+                self.get_assert(ass, v0, v1, v2)
+        # 取值规则不为空，则进行取值
+        if fetch:
+            if isinstance(fetch, list) is False:
+                raise Exception('取值规则不为list类型')
+            else:
+                for f in fetch:
+                    for key, f_path in f.items():
+                        self.var[key] = jsonpath.jsonpath(data_json, f_path)
 
     def get_data_type(self, type, value):
         """
@@ -138,11 +202,11 @@ class BaseTest${thread_id}(unittest.TestCase):
             return self.assertNotRegex(args[0], args[1], args[2])
         raise Exception('不存在该种断言类型')
 
-    def SetUp(self):
-        pass
+    def setUp(self):
+        self.var = {}
 
-    def TearDown(self):
-        pass
+    def tearDown(self):
+        self.var = {}
 
     ${test_case}
 '''
@@ -165,7 +229,6 @@ class BaseTest${thread_id}(unittest.TestCase):
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)
-            print(precondition_case_ids, type(precondition_case_ids))
         except Precondition.DoesNotExist:
             precondition_case_ids = []
         precondition_cases = []
@@ -177,7 +240,7 @@ class BaseTest${thread_id}(unittest.TestCase):
                     precondition_cases.append(self.build_case_info(case_obj, level + 1))
                 except Precondition.DoesNotExist:
                     pass
-        case_info['precondition'] = precondition_cases
+        case_info['preconditions'] = precondition_cases
         case_info['method'] = METHOD_CONST[instance.method]
         case_info['url'] = self.build_test_url(instance)
         data = eval(instance.data)
@@ -189,7 +252,6 @@ class BaseTest${thread_id}(unittest.TestCase):
             case_info['fetch'] = data.get('fetch', None)
         else:
             raise Exception('用例数据格式不正确')
-        print(case_info)
         return case_info
 
     def build_test_url(self, case):
