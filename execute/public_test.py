@@ -27,7 +27,7 @@ class PublicTestCase:
         # 判断是否存在前置用例，如果存在前置用例，则递归执行所有前置用例，获取依赖值
         if preconditions and isinstance(preconditions, list):
             for p in preconditions:
-                self.precondition_case(p)
+                self.precondition_case_execute(p)
         if body:
             body = json.dumps(body)
         verify = value.get('verify', None)
@@ -37,27 +37,9 @@ class PublicTestCase:
             raise Exception('请求头、url或者请求方法为空')
         response = requests.request(method=method, url=url, params=param, data=body, headers=header)
         data_json = response.json()
-        # 断言规则不为空，则进行断言
+        # 断言规则不为空，则进行断言验证
         if verify: 
-            if isinstance(verify, list) is False:
-                raise Exception('断言规则不为list类型')
-            # 遍历所有断言规则
-            for ver in verify:
-                if isinstance(ver, dict) is False:
-                    raise Exception('断言子规则不为dict类型')
-                for ass, d in ver.items():
-                    v0, v1, v2 = None, None, None
-                    if isinstance(d, dict) is False:
-                        raise Exception('断言规则定义不为dict类型')
-                    path = d.get('path', None)
-                    types = d.get('types', None)
-                    value = d.get('value', None)
-                    if path is not None:
-                        v0 = jsonpath.jsonpath(data_json, path)
-                    if types is not None and value is not None:
-                        v1 = self.get_data_type(types, value)
-                    v2 = d.get('msg', None)
-                self.get_assert(ass, v0, v1, v2)
+            self.assert_verify(verify, data_json)
         # 取值规则不为空，则进行取值
         if fetch:
             if isinstance(fetch, list) is False:
@@ -74,7 +56,35 @@ class BaseTest${thread_id}(unittest.TestCase):
     测试基类
     """
     
-    def precondition_case(self, value):
+    def assert_verify(self, rules, response_json):
+        """
+        断言校验
+        :param response_json: 接口返回值
+        :param rules:  断言规则
+        :return:
+        """
+        if isinstance(rules, list) is False:
+            raise Exception('断言规则不为list类型')
+            # 遍历所有断言规则
+        for rule in rules:
+            if isinstance(rule, dict) is False:
+                raise Exception('断言子规则不为dict类型')
+            for ass, d in rule.items():
+                v0, v1, v2 = None, None, None
+                if isinstance(d, dict) is False:
+                    raise Exception('断言规则定义不为dict类型')
+                path = d.get('path', None)
+                types = d.get('types', None)
+                value = d.get('value', None)
+                if path is not None:
+                    v0 = jsonpath.jsonpath(response_json, path)
+                if types is not None and value is not None:
+                    v1 = self.get_data_type(types, value)
+                v2 = d.get('msg', None)
+            self.get_assert(ass, v0, v1, v2)
+
+    
+    def precondition_case_execute(self, value):
         """
         前置用例执行方法
         :param value: 测试用例
@@ -88,7 +98,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         preconditions = value.get('preconditions', None)
         if preconditions and isinstance(preconditions, list):
             for p in preconditions:
-                self.precondition_case(p)
+                self.precondition_case_execute(p)
         if body:
             body = json.dumps(body)
         verify = value.get('verify', None)
@@ -100,25 +110,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         data_json = response.json()
         # 断言规则不为空，则进行断言
         if verify:
-            if isinstance(verify, list) is False:
-                raise Exception('断言规则不为list类型')
-            # 遍历所有断言规则
-            for ver in verify:
-                if isinstance(ver, dict) is False:
-                    raise Exception('断言子规则不为dict类型')
-                for ass, d in ver.items():
-                    v0, v1, v2 = None, None, None
-                    if isinstance(d, dict) is False:
-                        raise Exception('断言规则定义不为dict类型')
-                    path = d.get('path', None)
-                    types = d.get('types', None)
-                    value = d.get('value', None)
-                    if path is not None:
-                        v0 = jsonpath.jsonpath(data_json, path)
-                    if types is not None and value is not None:
-                        v1 = self.get_data_type(types, value)
-                    v2 = d.get('msg', None)
-                self.get_assert(ass, v0, v1, v2)
+            self.assert_verify(verify, data_json)
         # 取值规则不为空，则进行取值
         if fetch:
             if isinstance(fetch, list) is False:
@@ -238,8 +230,8 @@ class BaseTest${thread_id}(unittest.TestCase):
                     case_obj = TestCase.objects.get(id=case_id)
                     # 递归获取构建前置用例
                     precondition_cases.append(self.build_case_info(case_obj, level + 1))
-                except Precondition.DoesNotExist:
-                    pass
+                except Exception:
+                    continue
         case_info['preconditions'] = precondition_cases
         case_info['method'] = METHOD_CONST[instance.method]
         case_info['url'] = self.build_test_url(instance)
