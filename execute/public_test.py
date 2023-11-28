@@ -276,7 +276,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         data = string.Template(body).safe_substitute(var)
         return data
 
-    def test_case(self):
+    def splice_test_case(self):
         """
         测试用例拼接
         """
@@ -288,12 +288,12 @@ class BaseTest${thread_id}(unittest.TestCase):
             params += param
         return params
 
-    def test_class(self):
+    def splice_test_class(self):
         """
         测试类拼接
         """
         test_case = {
-            'test_case': self.test_case(),
+            'test_case': self.splice_test_case(),
             'thread_id': threading.get_ident()
         }
         # thread_id避免类冲突
@@ -305,7 +305,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         """
         import threading
         import gc
-        test_class = self.test_class()
+        test_class = self.splice_test_class()
         # 将动态代码加载到内存
         exec(test_class)
         print("Thread ID:", threading.get_ident())
@@ -326,6 +326,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             runner = unittest.TextTestRunner(verbosity=2)
             # 执行测试套件
             runner.run(suite)
+
 
 
 if __name__ == '__main__':
