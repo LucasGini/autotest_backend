@@ -16,7 +16,10 @@ class PublicTestCase:
     """
 
     case = '''
-    def test_case_id_is_${index}(self):
+    def test_case_id_is_${case_id}(self):
+        """
+        ${case_name}
+        """
         value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
@@ -283,7 +286,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         params = """"""
         for instance in self.case_list:
             case_info = self.build_case_info(instance)
-            dict_data = {'index': instance.id, 'case_info': case_info}
+            dict_data = {'case_id': instance.id, 'case_name': instance.case_name, 'case_info': case_info}
             param = self.str_template(self.case, dict_data)
             params += param
         return params
