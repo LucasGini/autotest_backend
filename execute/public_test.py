@@ -16,7 +16,7 @@ class PublicTestCase:
     """
 
     case = '''
-    def test_case_${index}(self):
+    def test_case_id_is_${index}(self):
         value=${case_info}
         header = value.get('header', None)
         url = value.get('url', None)
@@ -276,24 +276,24 @@ class BaseTest${thread_id}(unittest.TestCase):
         data = string.Template(body).safe_substitute(var)
         return data
 
-    def test_case(self):
+    def splice_test_case(self):
         """
         测试用例拼接
         """
         params = """"""
-        for index, instance in enumerate(self.case_list):
+        for instance in self.case_list:
             case_info = self.build_case_info(instance)
-            dict_data = {'index': index, 'case_info': case_info}
+            dict_data = {'index': instance.id, 'case_info': case_info}
             param = self.str_template(self.case, dict_data)
             params += param
         return params
 
-    def test_class(self):
+    def splice_test_class(self):
         """
         测试类拼接
         """
         test_case = {
-            'test_case': self.test_case(),
+            'test_case': self.splice_test_case(),
             'thread_id': threading.get_ident()
         }
         # thread_id避免类冲突
@@ -305,7 +305,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         """
         import threading
         import gc
-        test_class = self.test_class()
+        test_class = self.splice_test_class()
         # 将动态代码加载到内存
         exec(test_class)
         print("Thread ID:", threading.get_ident())
@@ -326,6 +326,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             runner = unittest.TextTestRunner(verbosity=2)
             # 执行测试套件
             runner.run(suite)
+
 
 
 if __name__ == '__main__':
