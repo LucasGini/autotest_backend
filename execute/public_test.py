@@ -330,15 +330,3 @@ class BaseTest${thread_id}(unittest.TestCase):
             # 执行测试套件
             runner.run(suite)
 
-
-
-if __name__ == '__main__':
-    from apps.cases.models import TestCase
-    from apps.basics.models import TestEnv
-
-    env = TestEnv.objects.get(id=1, enable_flag=1)
-    queryset = TestCase.objects.all().filter(enable_flag=1)
-    datas = []
-    for i in queryset:
-        datas.append(i)
-    PublicTestCase(datas, env).test_main()
