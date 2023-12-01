@@ -33,24 +33,19 @@ class PublicTestCase:
                 self.precondition_case_execute(p)
         if body:
             body = json.dumps(body)
-        verify = value.get('verify', None)
-        fetch = value.get('fetch', None)
         # 请求头、url、请求方法不为空才发起请求
         if header is None or url is None or method is None:
             raise Exception('请求头、url或者请求方法为空')
         response = requests.request(method=method, url=url, params=param, data=body, headers=header)
         data_json = response.json()
-        # 断言规则不为空，则进行断言验证
-        if verify: 
+        verify = value.get('verify', None)
+        # 断言规则不为空，则进行断言
+        if verify:
             self.assert_verify(verify, data_json)
+        fetch = value.get('fetch', None)
         # 取值规则不为空，则进行取值
         if fetch:
-            if isinstance(fetch, list) is False:
-                raise Exception('取值规则不为list类型')
-            else:
-                for f in fetch:
-                    for key, f_path in f.items():
-                        self.var[key] = jsonpath.jsonpath(data_json, f_path)
+           self.fetch_data(fetch, data_json)
 '''
 
     code = '''
@@ -59,6 +54,20 @@ class BaseTest${thread_id}(unittest.TestCase):
     测试基类
     """
     
+    def fetch_data(self, fetch, response_json):
+        """
+        取值
+        :param response_json: 接口返回值
+        :param fetch:  取值规则
+        :return:
+        """
+    
+        if isinstance(fetch, list) is False:
+            raise Exception('取值规则不为list类型')
+        for f in fetch:
+            for key, f_path in f.items():
+                self.var[key] = jsonpath.jsonpath(response_json, f_path)
+    
     def assert_verify(self, rules, response_json):
         """
         断言校验
@@ -66,6 +75,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         :param rules:  断言规则
         :return:
         """
+        
         if isinstance(rules, list) is False:
             raise Exception('断言规则不为list类型')
             # 遍历所有断言规则
@@ -99,29 +109,25 @@ class BaseTest${thread_id}(unittest.TestCase):
         method = value.get('method', None)
         body = value.get('body', None)
         preconditions = value.get('preconditions', None)
+        # 判断是否存在前置用例，如果存在前置用例，则递归执行所有前置用例，获取依赖值
         if preconditions and isinstance(preconditions, list):
             for p in preconditions:
                 self.precondition_case_execute(p)
         if body:
             body = json.dumps(body)
-        verify = value.get('verify', None)
-        fetch = value.get('fetch', None)
         # 请求头、url、请求方法不为空才发起请求
         if header is None or url is None or method is None:
             raise Exception('请求头、url或者请求方法为空')
         response = requests.request(method=method, url=url, params=param, data=body, headers=header)
         data_json = response.json()
+        verify = value.get('verify', None)
         # 断言规则不为空，则进行断言
         if verify:
             self.assert_verify(verify, data_json)
+        fetch = value.get('fetch', None)
         # 取值规则不为空，则进行取值
         if fetch:
-            if isinstance(fetch, list) is False:
-                raise Exception('取值规则不为list类型')
-            else:
-                for f in fetch:
-                    for key, f_path in f.items():
-                        self.var[key] = jsonpath.jsonpath(data_json, f_path)
+           self.fetch_data(fetch, data_json)
 
     def get_data_type(self, type, value):
         """
