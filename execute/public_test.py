@@ -292,7 +292,11 @@ class BaseTest${thread_id}(unittest.TestCase):
         params = """"""
         for instance in self.case_list:
             case_info = self.build_case_info(instance)
-            dict_data = {'case_id': instance.id, 'case_name': instance.case_name, 'case_info': case_info}
+            dict_data = {
+                'case_id': instance.id,
+                'case_name': instance.case_name,
+                'case_info': case_info
+            }
             param = self.str_template(self.case, dict_data)
             params += param
         return params
