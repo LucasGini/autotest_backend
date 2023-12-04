@@ -5,6 +5,7 @@ import threading
 import unittest
 import requests
 import jsonpath
+from execute.case_info import CaseInfo
 from apps.cases.models import Precondition, TestCase
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
@@ -20,29 +21,29 @@ class PublicTestCase:
         """
         ${case_name}
         """
-        value=${case_info}
-        header = value.get('header', None)
-        url = value.get('url', None)
-        param = value.get('param', None)
-        method = value.get('method', None)
-        body = value.get('body', None)
-        preconditions = value.get('preconditions', None)
+        test_case=${case_info}
+        preconditions = test_case.get('preconditions', None)
         # 判断是否存在前置用例，如果存在前置用例，则递归执行所有前置用例，获取依赖值
         if preconditions and isinstance(preconditions, list):
             for p in preconditions:
                 self.precondition_case_execute(p)
+        body = test_case.get('body', None)
         if body:
             body = json.dumps(body)
+        param = test_case.get('param', None)
+        header = test_case.get('header', None)
+        url = test_case.get('url', None)
+        method = test_case.get('method', None)
         # 请求头、url、请求方法不为空才发起请求
         if header is None or url is None or method is None:
             raise Exception('请求头、url或者请求方法为空')
         response = requests.request(method=method, url=url, params=param, data=body, headers=header)
         data_json = response.json()
-        verify = value.get('verify', None)
+        verify = test_case.get('verify', None)
         # 断言规则不为空，则进行断言
         if verify:
             self.assert_verify(verify, data_json)
-        fetch = value.get('fetch', None)
+        fetch = test_case.get('fetch', None)
         # 取值规则不为空，则进行取值
         if fetch:
            self.fetch_data(fetch, data_json)
@@ -226,7 +227,8 @@ class BaseTest${thread_id}(unittest.TestCase):
         """
         if level > max_depth:
             return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
-        case_info = {}
+        # 获取用例信息定义
+        case_info = CaseInfo()
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)
@@ -241,19 +243,19 @@ class BaseTest${thread_id}(unittest.TestCase):
                     precondition_cases.append(self.build_case_info(case_obj, level + 1))
                 except Exception:
                     continue
-        case_info['preconditions'] = precondition_cases
-        case_info['method'] = METHOD_CONST[instance.method]
-        case_info['url'] = self.build_test_url(instance)
+        case_info.preconditions = precondition_cases
+        case_info.method = METHOD_CONST[instance.method]
+        case_info.url = self.build_test_url(instance)
         data = eval(instance.data)
         if isinstance(data, dict):
-            case_info['header'] = data.get('header', None)
-            case_info['param'] = data.get('param', None)
-            case_info['body'] = data.get('body', None)
-            case_info['verify'] = data.get('verify', None)
-            case_info['fetch'] = data.get('fetch', None)
+            case_info.header = data.get('header', None)
+            case_info.param = data.get('param', None)
+            case_info.body = data.get('body', None)
+            case_info.verify = data.get('verify', None)
+            case_info.fetch = data.get('fetch', None)
         else:
             raise Exception('用例数据格式不正确')
-        return case_info
+        return case_info.dict()
 
     def build_test_url(self, case):
         """
