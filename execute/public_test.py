@@ -229,6 +229,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
         # 获取用例信息定义
         case_info = CaseInfo()
+        case_info.name = instance.case_name
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)

@@ -10,6 +10,7 @@ class CaseInfo(BaseModel):
     """
     用例字段定义
     """
+    name: Text = None
     preconditions: List = []
     method: Text = None
     url: HttpUrl = None
