@@ -103,19 +103,17 @@ class SetattrPublicTestCase(PublicTestCase):
         """
         for index, instance in enumerate(self.case_list):
             case_info = self.build_case_info(instance)
-            print(case_info)
 
-            def test_case(self):
-                value = case_info
-                header = value.get('header', None)
-                url = value.get('url', None)
-                param = value.get('param', None)
-                method = value.get('method', None)
-                body = value.get('body', None)
+            def test_case(self, case=case_info):
+                header = case.get('header', None)
+                url = case.get('url', None)
+                param = case.get('param', None)
+                method = case.get('method', None)
+                body = case.get('body', None)
                 if body:
                     body = json.dumps(body)
-                verify = value.get('verify', None)
-                fetch = value.get('fetch', None)
+                verify = case.get('verify', None)
+                fetch = case.get('fetch', None)
                 # 请求头、url、请求方法不为空才发起请求
                 if header is None or url is None or method is None:
                     raise Exception('请求头、url或者请求方法为空')
