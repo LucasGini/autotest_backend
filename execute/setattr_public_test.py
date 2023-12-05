@@ -52,29 +52,30 @@ class TestBase(unittest.TestCase):
                 v2 = d.get('msg', None)
             self.get_assert(ass, v0, v1, v2)
 
-    def get_data_type(self, type, value):
+    @staticmethod
+    def get_data_type(data_type, value):
         """
         将数据转换为对应类型
-        :param type: 数据类型
+        :param data_type: 数据类型
         :param value: 需要转换的数据
         :return: 转换后的数据
         """
 
-        if type == 'int':
+        if data_type == 'int':
             return int(value)
-        if type == 'float':
+        if data_type == 'float':
             return float(value)
-        if type == 'bool':
+        if data_type == 'bool':
             return bool(value)
-        if type == 'str':
+        if data_type == 'str':
             return str(value)
-        if type == 'list':
+        if data_type == 'list':
             return list(value)
-        if type == 'tuple':
+        if data_type == 'tuple':
             return tuple(value)
-        if type == 'set':
+        if data_type == 'set':
             return set(value)
-        if type == 'dict':
+        if data_type == 'dict':
             return dict(value)
         raise Exception('不存在该种数据类型')
 
