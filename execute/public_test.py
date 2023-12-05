@@ -9,6 +9,7 @@ from execute.case_info import CaseInfo
 from apps.cases.models import Precondition, TestCase
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
+from common.utils.data_handling import str_template_insert
 
 
 class PublicTestCase:
@@ -276,19 +277,6 @@ class BaseTest${thread_id}(unittest.TestCase):
 
         return url
 
-    @staticmethod
-    def str_template(body: str, var: dict) -> any:
-        """
-        字符串模板插入并返回相应对象
-        param: body 字符串
-        param: var 插入值（字典，key需要与body中标记的key一致）
-        """
-        # 初始化
-        false, true, null = False, True, ''
-        # 字符串模板插入
-        data = string.Template(body).safe_substitute(var)
-        return data
-
     def splice_test_case(self):
         """
         测试用例拼接
@@ -301,7 +289,7 @@ class BaseTest${thread_id}(unittest.TestCase):
                 'case_name': instance.case_name,
                 'case_info': case_info
             }
-            param = self.str_template(self.case, dict_data)
+            param = str_template_insert(self.case, dict_data)
             params += param
         return params
 
@@ -314,7 +302,7 @@ class BaseTest${thread_id}(unittest.TestCase):
             'thread_id': threading.get_ident()
         }
         # thread_id避免类冲突
-        return self.str_template(self.code, test_case)
+        return str_template_insert(self.code, test_case)
 
     def test_main(self):
         """

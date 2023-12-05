@@ -3,6 +3,7 @@ import jsonpath
 import requests
 import unittest
 from execute.public_test import PublicTestCase
+from common.utils.data_handling import build_case_data
 
 
 class TestBase(unittest.TestCase):
@@ -154,26 +155,23 @@ class SetattrPublicTestCase(PublicTestCase):
                     case_execute = getattr(self, 'case_execute')
                     for p in preconditions:
                         case_execute(p)
-                body = case.get('body', None)
-                if body:
-                    body = json.dumps(body)
-                param = case.get('param', None)
-                header = case.get('header', None)
+                # 构建请求数据
+                body, param, header = build_case_data(case, self.var)
                 url = case.get('url', None)
                 method = case.get('method', None)
                 # 请求头、url、请求方法不为空才发起请求
                 if header is None or url is None or method is None:
                     raise Exception('请求头、url或者请求方法为空')
                 response = requests.request(method=method, url=url, params=param, data=body, headers=header)
-                data_json = response.json()
+                response_json = response.json()
                 verify = case.get('verify', None)
                 # 断言规则不为空，则进行断言
                 if verify:
-                    self.assert_verify(verify, data_json)
+                    self.assert_verify(verify, response_json)
                 fetch = case.get('fetch', None)
                 # 取值规则不为空，则进行取值
                 if fetch:
-                    self.fetch_data(fetch, data_json)
+                    self.fetch_data(fetch, response_json)
 
             if getattr(TestBase, 'case_execute', None) is None:
                 # 将case_execute动态加载到TestBase类，方便递归调用
