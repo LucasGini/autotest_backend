@@ -179,7 +179,7 @@ class SetattrPublicTestCase(PublicTestCase):
                 setattr(TestBase, 'case_execute', test_case)
             # 修改方法描述文档
             test_case.__doc__ = case_info.get('name', None)
-            # 使用setattr函数动态创建测试方法，并将方法文档说明设置为用例的名称
+            # 使用setattr函数动态创建测试方法
             setattr(TestBase, f'test_case_id_is_{instance.id}', test_case)
 
     def test_main(self):
