@@ -5,11 +5,52 @@ import unittest
 from execute.public_test import PublicTestCase
 
 
-# 这种方式有bug，setattr()时，会将用例里的'False'转换为False，故不使用这种方法
 class TestBase(unittest.TestCase):
     """
     测试基类
     """
+
+    def fetch_data(self, fetch, response_json):
+        """
+        取值
+        :param response_json: 接口返回值
+        :param fetch:  取值规则
+        :return:
+        """
+
+        if isinstance(fetch, list) is False:
+            raise Exception('取值规则不为list类型')
+        for f in fetch:
+            for key, f_path in f.items():
+                self.var[key] = jsonpath.jsonpath(response_json, f_path)
+
+    def assert_verify(self, rules, response_json):
+        """
+        断言校验
+        :param response_json: 接口返回值
+        :param rules:  断言规则
+        :return:
+        """
+
+        if isinstance(rules, list) is False:
+            raise Exception('断言规则不为list类型')
+            # 遍历所有断言规则
+        for rule in rules:
+            if isinstance(rule, dict) is False:
+                raise Exception('断言子规则不为dict类型')
+            ass, v0, v1, v2 = 'assertEqual', None, None, None
+            for ass, d in rule.items():
+                if isinstance(d, dict) is False:
+                    raise Exception('断言规则定义不为dict类型')
+                path = d.get('path', None)
+                types = d.get('types', None)
+                value = d.get('value', None)
+                if path is not None:
+                    v0 = jsonpath.jsonpath(response_json, path)
+                if types is not None and value is not None:
+                    v1 = self.get_data_type(types, value)
+                v2 = d.get('msg', None)
+            self.get_assert(ass, v0, v1, v2)
 
     def get_data_type(self, type, value):
         """
@@ -85,11 +126,11 @@ class TestBase(unittest.TestCase):
             return self.assertNotRegex(args[0], args[1], args[2])
         raise Exception('不存在该种断言类型')
 
-    def SetUp(self):
-        pass
+    def setUp(self):
+        self.var = {}
 
-    def TearDown(self):
-        pass
+    def tearDown(self):
+        self.var = {}
 
 
 class SetattrPublicTestCase(PublicTestCase):
@@ -101,54 +142,45 @@ class SetattrPublicTestCase(PublicTestCase):
         """
         测试用例加载
         """
-        for index, instance in enumerate(self.case_list):
+        for instance in self.case_list:
             case_info = self.build_case_info(instance)
-            print(case_info)
 
-            def test_case(self):
-                value = case_info
-                header = value.get('header', None)
-                url = value.get('url', None)
-                param = value.get('param', None)
-                method = value.get('method', None)
-                body = value.get('body', None)
+            def test_case(self, case=case_info):
+                preconditions = case.get('preconditions', None)
+                # 判断是否存在前置用例
+                if preconditions and isinstance(preconditions, list):
+                    # 获取测试用例执行方法，递归执行前置用例，获取依赖值
+                    case_execute = getattr(self, 'case_execute')
+                    for p in preconditions:
+                        case_execute(p)
+                body = case.get('body', None)
                 if body:
                     body = json.dumps(body)
-                verify = value.get('verify', None)
-                fetch = value.get('fetch', None)
+                param = case.get('param', None)
+                header = case.get('header', None)
+                url = case.get('url', None)
+                method = case.get('method', None)
                 # 请求头、url、请求方法不为空才发起请求
                 if header is None or url is None or method is None:
                     raise Exception('请求头、url或者请求方法为空')
                 response = requests.request(method=method, url=url, params=param, data=body, headers=header)
                 data_json = response.json()
+                verify = case.get('verify', None)
                 # 断言规则不为空，则进行断言
                 if verify:
-                    if isinstance(verify, list) is False:
-                        raise Exception('断言规则不为list类型')
-                    # 遍历所有断言规则
-                    for ver in verify:
-                        if isinstance(ver, dict) is False:
-                            raise Exception('断言子规则不为dict类型')
-                        for ass, d in ver.items():
-                            v0, v1, v2 = None, None, None
-                            if isinstance(d, dict) is False:
-                                raise Exception('断言规则定义不为dict类型')
-                            path = d.get('path', None)
-                            types = d.get('types', None)
-                            value = d.get('value', None)
-                            if path is not None:
-                                v0 = jsonpath.jsonpath(data_json, path)
-                            if types is not None and value is not None:
-                                v1 = self.get_data_type(types, value)
-                            v2 = d.get('msg', None)
-                        self.get_assert(ass, v0, v1, v2)
+                    self.assert_verify(verify, data_json)
+                fetch = case.get('fetch', None)
                 # 取值规则不为空，则进行取值
                 if fetch:
-                    if isinstance(verify, list) is False:
-                        raise Exception('取值规则不为list类型')
+                    self.fetch_data(fetch, data_json)
 
-            # 使用setattr函数动态创建测试方法，并将方法名设置为即可用例的名称
-            setattr(TestBase, f'test_case_{index}', test_case)
+            if getattr(TestBase, 'case_execute', None) is None:
+                # 将case_execute动态加载到TestBase类，方便递归调用
+                setattr(TestBase, 'case_execute', test_case)
+            # 修改方法描述文档
+            test_case.__doc__ = case_info.get('name', None)
+            # 使用setattr函数动态创建测试方法，并将方法文档说明设置为用例的名称
+            setattr(TestBase, f'test_case_id_is_{instance.id}', test_case)
 
     def test_main(self):
         """
