@@ -10,9 +10,10 @@ class CaseInfo(BaseModel):
     """
     用例字段定义
     """
-    name: Text = None
+    id: int = None
+    name: Text = ''
     preconditions: List = []
-    method: Text = None
+    method: Text = ''
     url: HttpUrl = None
     header: Dict = {}
     param: Dict = {}

@@ -230,6 +230,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         # 获取用例信息定义
         case_info = CaseInfo()
         case_info.name = instance.case_name
+        case_info.id = instance.id
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)
