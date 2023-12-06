@@ -59,13 +59,12 @@ def build_case_data(case: dict, var: dict) -> json or dict or None:
     :param var: 依赖参数
     :return: json or dict or None
     """
+    # 初始化
     body, param, header = None, None, None
     if case.get('body', None):
         body_data = build_data(case.get('body', None), var)
         body = json.dumps(body_data)
-    if case.get('param', None):
-        param = build_data(case.get('param', None), var)
-    if case.get('header', None):
-        header = build_data(case.get('header', None), var)
+    param = build_data(case.get('param', None), var)
+    header = build_data(case.get('header', None), var)
     return body, param, header
 
