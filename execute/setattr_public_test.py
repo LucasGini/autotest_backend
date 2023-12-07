@@ -1,4 +1,3 @@
-import json
 import jsonpath
 import requests
 import unittest
@@ -24,7 +23,6 @@ class TestBase(unittest.TestCase):
         for f in fetch:
             for key, f_path in f.items():
                 self.var[key] = jsonpath.jsonpath(response_json, f_path)
-
 
     def assert_verify(self, rules, response_json):
         """
