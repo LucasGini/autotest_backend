@@ -1,4 +1,3 @@
-import json
 import jsonpath
 import requests
 import unittest

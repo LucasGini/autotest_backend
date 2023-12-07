@@ -9,16 +9,10 @@ from common.general_page import GeneralPage
 from common.custom_response import CustomResponse
 from common.custom_model_viewset import CustomModelViewSet
 from common.utils.default_write import default_write
-from apps.cases.serializers import ListTestCaseSerializer
-from apps.cases.serializers import CreateTestCaseSerializer
-from apps.cases.serializers import ListProjectsInfoSerializer
-from apps.cases.serializers import CreateProjectsInfoSerializer
-from apps.cases.serializers import ListTestSuiteSerializer
-from apps.cases.serializers import CreateTestSuiteSerializer
-from apps.cases.models import TestCase
-from apps.cases.models import TestSuite
-from apps.cases.models import Precondition
-from apps.cases.models import ProjectsInfo
+from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerializer, ListProjectsInfoSerializer,
+                                    CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
+                                    ListDependentMethodsSerializer, CreateDependentMethodsSerializer)
+from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods
 from apps.cases.task import run_case
 
 
@@ -212,6 +206,24 @@ class TestSuiteModelViewSet(CustomModelViewSet):
             instance._prefetched_objects_cache = {}
 
         return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
+
+
+class DependentMethodsViewSet(CustomModelViewSet):
+    """
+    依赖方法视图集
+    """
+
+    queryset = DependentMethods.objects.filter(enable_flag=1)
+    pagination_class = GeneralPage
+    serializer_class = ListDependentMethodsSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_class
+        if self.action == 'create' or self.action == 'update':
+            return CreateDependentMethodsSerializer
+        else:
+            return self.serializer_class
 
 
 class ExecuteView(views.APIView):
