@@ -24,3 +24,4 @@ class TestEnv(BaseModel):
     class Meta:
         verbose_name = '测试环境表'
         verbose_name_plural = '测试环境表'
+        db_table = 'test_env'

@@ -1,13 +1,12 @@
 from django.urls import path, include
-from apps.cases.views import ListCreateTestCaseView, ExecuteView
-from apps.cases.views import RetrieveUpdateDestroyTestCaseAPIView
-from apps.cases.views import ProjectsInfoModelViewSet
-from apps.cases.views import TestSuiteModelViewSet
+from apps.cases.views import (ListCreateTestCaseView, ExecuteView, RetrieveUpdateDestroyTestCaseAPIView,
+                              ProjectsInfoModelViewSet, TestSuiteModelViewSet, DependentMethodsViewSet)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('project', ProjectsInfoModelViewSet, basename='project')
 router.register('testsuite', TestSuiteModelViewSet, basename='test_suite')
+router.register('dependent', DependentMethodsViewSet, basename='dependent_methods')
 
 
 urlpatterns = [

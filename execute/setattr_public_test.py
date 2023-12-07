@@ -25,6 +25,7 @@ class TestBase(unittest.TestCase):
             for key, f_path in f.items():
                 self.var[key] = jsonpath.jsonpath(response_json, f_path)
 
+
     def assert_verify(self, rules, response_json):
         """
         断言校验

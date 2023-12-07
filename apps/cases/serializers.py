@@ -1,8 +1,5 @@
 from rest_framework import serializers
-from apps.cases.models import TestCase
-from apps.cases.models import ProjectsInfo
-from apps.cases.models import Precondition
-from apps.cases.models import TestSuite
+from apps.cases.models import TestCase, TestSuite, ProjectsInfo,Precondition, DependentMethods
 from django.db import transaction
 from rest_framework.exceptions import APIException
 from common.utils.default_write import default_write
@@ -27,18 +24,6 @@ class CreateProjectsInfoSerializer(CustomModelSerializer):
     class Meta:
         model = ProjectsInfo
         exclude = ('enable_flag', 'created_by', 'updated_by')
-
-    def create(self, validated_data):
-        request = self.context.get('request')
-        instance = super().create(validated_data)
-        default_write(instance, request)
-        return instance
-
-    def update(self, instance, validated_data):
-        request = self.context.get('request')
-        instance = super().update(instance, validated_data)
-        default_write(instance, request)
-        return instance
 
 
 class CreatePreconditionSerializer(CustomModelSerializer):
@@ -143,6 +128,29 @@ class CreateTestSuiteSerializer(CustomModelSerializer):
     class Meta:
         model = TestSuite
         exclude = ('enable_flag', 'created_by', 'updated_by')
+
+
+class ListDependentMethodsSerializer(CustomModelSerializer):
+    """
+    依赖方法列表序列化器
+    """
+
+    class Meta:
+        model = DependentMethods
+        fields = '__all__'
+
+
+class CreateDependentMethodsSerializer(CustomModelSerializer):
+    """
+    依赖方法创建序列化器
+    """
+
+    class Meta:
+        model = DependentMethods
+        exclude = ('enable_flag', 'created_by', 'updated_by')
+
+
+
 
 
 

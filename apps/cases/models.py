@@ -39,6 +39,7 @@ class TestCase(BaseModel):
     class Meta:
         verbose_name = '测试用例'
         verbose_name_plural = '测试用例'
+        db_table = 'test_case'
 
 
 class TestSuite(BaseModel):
@@ -55,6 +56,7 @@ class TestSuite(BaseModel):
     class Meta:
         verbose_name = '测试用例集表'
         verbose_name_plural = '测试用例集表'
+        db_table = 'test_suite'
 
 
 class ProjectsInfo(BaseModel):
@@ -72,6 +74,7 @@ class ProjectsInfo(BaseModel):
     class Meta:
         verbose_name = '项目表'
         verbose_name_plural = '项目表'
+        db_table = 'projects_info'
 
 
 class Precondition(BaseModel):
@@ -87,3 +90,20 @@ class Precondition(BaseModel):
     class Meta:
         verbose_name = '前置条件表'
         verbose_name_plural = '前置条件表'
+        db_table = 'precondition'
+
+
+class DependentMethods(BaseModel):
+    """
+    依赖方法表
+    """
+    project = models.ForeignKey('ProjectsInfo', on_delete=models.DO_NOTHING, verbose_name='项目')
+    dependent_method = models.TextField(verbose_name='依赖方法', blank=True, null=True)
+
+    def __str__(self):
+        return self.project.project_name
+
+    class Meta:
+        verbose_name = '依赖方法表'
+        verbose_name_plural = '依赖方法表'
+        db_table = 'dependent_methods'
