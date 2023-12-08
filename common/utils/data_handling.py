@@ -49,7 +49,7 @@ def build_data(initial_data: dict, var: dict) -> dict or None:
             return data
         else:
             return initial_data
-    return initial_data
+    return None
 
 
 def build_case_data(case: dict, var: dict) -> json or dict or None:
@@ -62,9 +62,9 @@ def build_case_data(case: dict, var: dict) -> json or dict or None:
     # 初始化
     body, param, header = None, None, None
     if case.get('body', None):
-        body_data = build_data(case.get('body', None), var)
+        body_data = build_data(case.get('body', {}), var)
         body = json.dumps(body_data)
-    param = build_data(case.get('param', None), var)
-    header = build_data(case.get('header', None), var)
+    param = build_data(case.get('param', {}), var)
+    header = build_data(case.get('header', {}), var)
     return body, param, header
 
