@@ -20,6 +20,7 @@ class CaseInfo(BaseModel):
     body: Dict = {}
     verify: Verify = []
     fetch: Fetch = []
+    functions: Dict = {}
 
 
 if __name__ == '__main__':

@@ -147,6 +147,7 @@ class SetattrPublicTestCase(PublicTestCase):
             case_info = self.build_case_info(instance)
 
             def test_case(self, case=case_info):
+                print(case)
                 preconditions = case.get('preconditions', None)
                 # 判断是否存在前置用例
                 if preconditions and isinstance(preconditions, list):
