@@ -1,6 +1,7 @@
 import jsonpath
 import requests
 import unittest
+import typing
 from execute.public_test import PublicTestCase
 from common.utils.data_handling import build_case_data
 
@@ -53,7 +54,7 @@ class TestBase(unittest.TestCase):
             self.get_assert(ass, v0, v1, v2)
 
     @staticmethod
-    def get_data_type(data_type, value):
+    def get_data_type(data_type: str, value: typing.Any) -> typing.Any:
         """
         将数据转换为对应类型
         :param data_type: 数据类型
