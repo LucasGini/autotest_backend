@@ -1,6 +1,7 @@
 import json
 import string
 import re
+from execute.case_info import CaseInfo
 
 
 def str_template_insert(template: str, var: dict) -> any:
@@ -75,12 +76,40 @@ def is_valid_function(data: str) -> bool:
         return False
 
 
-def build_data(initial_data: dict, var: dict, functions: dict) -> dict or None:
+def function_parameters_handing(parameters: list, var: dict, dependent: dict) -> list:
+    """
+    函数参数处理
+    :param parameters: 函数参数
+    :param var: 全局接口依赖数据
+    :param dependent: 当前接口依赖数据
+    :return: new_parameters
+    """
+    new_parameters = []
+    for param in parameters:
+        # 如果参数前包含'$',需要先从当前接口依赖数据获取数据，再充全局接口依赖数据获取数据
+        if param.startswith('$'):
+            # 去除$和空格
+            param = param.replace('$', '').strip()
+            if param in dependent.keys():
+                new_param = dependent[param]
+                new_parameters.append(new_param)
+            elif param in var.keys():
+                new_param = var[param]
+                new_parameters.append(new_param)
+            else:
+                raise Exception(f'测试用例中使用的自定义函数的参数:{param}，不存在')
+        else:
+            new_parameters.append(param)
+    return new_parameters
+
+
+def build_data(initial_data: dict, var: dict, functions: dict, dependent: dict) -> dict or None:
     """
     构建数据
     :param initial_data: 初始数据，需要拼接后使用
     :param var: 依赖参数
     :param functions: 依赖函数
+    :param dependent: 依赖参数
     :return: dict or None
     """
     if initial_data:
@@ -93,10 +122,13 @@ def build_data(initial_data: dict, var: dict, functions: dict) -> dict or None:
                 # 校验是否为函数
                 if is_valid_function(field):
                     functions_name, parameters = match_func_name_and_parameters(field)
-                    if '$' in parameters:
-                        pass
-                    else:
+                    # 参数处理
+                    parameters = function_parameters_handing(parameters, var, dependent)
+                    if functions_name in functions.keys():
                         var[field] = functions[functions_name](*parameters)
+                    else:
+                        raise Exception(f'{functions_name}在自定义函数中不存在')
+            var.update(dependent)
             data = eval(str_template_insert(data_str, var))
             return data
         else:
@@ -104,22 +136,23 @@ def build_data(initial_data: dict, var: dict, functions: dict) -> dict or None:
     return None
 
 
-def build_case_data(case: dict, var: dict) -> json or dict or None:
+def build_case_data(case: CaseInfo.dict, var: dict) -> json or dict or None:
     """
     用例请求参数构建
     :param case: 用例信息
-    :param var: 依赖参数
+    :param var: 全局依赖参数
     :return: json or dict or None
     """
     # 初始化
     body, param, header = None, None, None
-    # 获取依赖函数
+    # 获取依赖参数和自定义函数
+    dependent = case.get('dependent', {})
     functions = case.get('functions', {})
     if case.get('body', None):
-        body_data = build_data(case.get('body', {}), var, functions)
+        body_data = build_data(case.get('body', {}), var, functions, dependent)
         body = json.dumps(body_data)
-    param = build_data(case.get('param', {}), var, functions)
-    header = build_data(case.get('header', {}), var, functions)
+    param = build_data(case.get('param', {}), var, functions, dependent)
+    header = build_data(case.get('header', {}), var, functions, dependent)
     return body, param, header
 
 

@@ -221,13 +221,13 @@ class BaseTest${thread_id}(unittest.TestCase):
         self.test_env = test_env
         self.dependent_method = {}
 
-    def build_case_info(self, instance, level=0, max_depth=3):
+    def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict or str:
         """
         构建用例信息
         :param max_depth: 设置最大递归深度,默认3
         :param level: 递归深度
         :param instance: case实例
-        :return: case_info
+        :return: CaseInfo.dict or str
         """
         if level > max_depth:
             return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
@@ -256,11 +256,12 @@ class BaseTest${thread_id}(unittest.TestCase):
         case_info.url = self.build_test_url(instance)
         data = eval(instance.data)
         if isinstance(data, dict):
-            case_info.header = data.get('header', None)
-            case_info.param = data.get('param', None)
-            case_info.body = data.get('body', None)
-            case_info.verify = data.get('verify', None)
-            case_info.fetch = data.get('fetch', None)
+            case_info.header = data.get('header', {})
+            case_info.param = data.get('param', {})
+            case_info.body = data.get('body', {})
+            case_info.verify = data.get('verify', [])
+            case_info.fetch = data.get('fetch', [])
+            case_info.dependent = data.get('dependent', {})
         else:
             raise Exception('用例数据格式不正确')
         return case_info.dict()
