@@ -1,3 +1,4 @@
+import copy
 import json
 import sys
 import string
@@ -235,7 +236,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         case_info.name = instance.case_name
         case_info.id = instance.id
         # 构建依赖函数
-        case_info.functions = self.build_dependent_methods(instance.project_id)
+        case_info.functions = copy.deepcopy(self.build_dependent_methods(instance.project_id))  # 深度copy，防止后续操作影响
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)
@@ -299,9 +300,6 @@ class BaseTest${thread_id}(unittest.TestCase):
             return self.dependent_method.setdefault(project_id, function_dict)
         return {}
 
-
-
-
     def splice_test_case(self):
         """
         测试用例拼接
@@ -356,4 +354,3 @@ class BaseTest${thread_id}(unittest.TestCase):
             runner = unittest.TextTestRunner(verbosity=2)
             # 执行测试套件
             runner.run(suite)
-

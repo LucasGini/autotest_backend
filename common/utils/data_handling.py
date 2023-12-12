@@ -48,12 +48,15 @@ def match_func_name_and_parameters(data: str) -> str and list or None:
     :return: str , list or None
     """
     pattern = r'(\w+)\(([^)]*)\)'
-    matches = re.match(pattern, data)
-
+    matches = re_string(pattern, data)
     if matches:
-        function_name = matches.group(1)
-        parameters = matches.group(2).split(',')
-        parameters = [param.strip() for param in parameters]
+        match = matches[0]
+        function_name = match[0]
+        parameters = match[1]
+        if parameters:
+            # 如果参数不为空， 则通过','分割,然后去除空格
+            parameters = parameters.split(',')
+            parameters = [param.strip() for param in parameters]
         return function_name, parameters
     raise Exception('函数占位格式不正确')
 
@@ -65,7 +68,7 @@ def is_valid_function(data: str) -> bool:
     :return:
     """
     pattern = r'\(.*\)'  # 匹配括号内的任意字符和文本
-    matches = re.search(pattern, data)
+    matches = re_string(pattern, data)
     if matches:
         return True
     else:
@@ -119,3 +122,6 @@ def build_case_data(case: dict, var: dict) -> json or dict or None:
     header = build_data(case.get('header', {}), var, functions)
     return body, param, header
 
+
+if __name__ == '__main__':
+    print(match_func_name_and_parameters('token($user, $passwd)'))
