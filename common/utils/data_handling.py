@@ -1,7 +1,7 @@
 import json
 import string
 import re
-from execute.case_info import CaseInfo
+from execute.data_model import CaseInfo
 
 
 def str_template_insert(template: str, var: dict) -> any:

@@ -1,13 +1,8 @@
 import copy
-import json
-import sys
-import string
 import threading
 import unittest
-import requests
-import jsonpath
 from common.utils.build_methods import create_dynamic_module, get_all_function_from_module
-from execute.case_info import CaseInfo
+from execute.data_model import CaseInfo
 from apps.cases.models import Precondition, TestCase, DependentMethods
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
@@ -227,10 +222,10 @@ class BaseTest${thread_id}(unittest.TestCase):
         :param max_depth: 设置最大递归深度,默认3
         :param level: 递归深度
         :param instance: case实例
-        :return: CaseInfo.dict or str
+        :return: CaseInfo.dict
         """
         if level > max_depth:
-            return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
+            raise Exception('已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了')
         # 获取用例信息定义
         case_info = CaseInfo()
         case_info.name = instance.case_name
