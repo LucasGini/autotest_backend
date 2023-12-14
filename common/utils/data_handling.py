@@ -1,3 +1,4 @@
+import ast
 import json
 import string
 import re
@@ -15,6 +16,20 @@ def str_template_insert(template: str, var: dict) -> any:
     # 字符串模板插入
     data = string.Template(template).safe_substitute(var)
     return data
+
+
+def parse_string_value(value: str):
+    """
+    解析字符串值
+    :param value:
+    :return:
+    """
+    try:
+        return ast.literal_eval(value)
+    except ValueError:
+        return value
+    except SyntaxError:
+        return value
 
 
 def re_string(pattern: str, text: str) -> list or bool:
@@ -76,31 +91,50 @@ def is_valid_function(data: str) -> bool:
         return False
 
 
-def function_parameters_handing(parameters: list, var: dict, dependent: dict) -> list:
+def replace_parameters(value: str, var: dict, dependent: dict):
+    """
+    判断字符串是否存在'$'，如果存在，则替换，不存在则返回原值
+    :param value: 参数值
+    :param var: 全局接口依赖数据
+    :param dependent: 当前接口依赖数据
+    :return:
+    """
+    if value.startswith('$'):
+        # 去除$和空格
+        param = value.replace('$', '').strip()
+        if param in dependent.keys():
+            new_param = dependent[param]
+            return new_param
+        elif param in var.keys():
+            new_param = var[param]
+            return new_param
+        else:
+            raise Exception(f'测试用例中使用的自定义函数的参数:{param}，不存在')
+    else:
+        return value
+
+
+def function_parameters_handing(parameters: list, var: dict, dependent: dict) -> list and dict:
     """
     函数参数处理
     :param parameters: 函数参数
     :param var: 全局接口依赖数据
     :param dependent: 当前接口依赖数据
-    :return: new_parameters
+    :return: args, kwargs
     """
-    new_parameters = []
+    args, kwargs = [], {}
+    if parameters == '':
+        return args, kwargs
     for param in parameters:
-        # 如果参数前包含'$',需要先从当前接口依赖数据获取数据，再充全局接口依赖数据获取数据
-        if param.startswith('$'):
-            # 去除$和空格
-            param = param.replace('$', '').strip()
-            if param in dependent.keys():
-                new_param = dependent[param]
-                new_parameters.append(new_param)
-            elif param in var.keys():
-                new_param = var[param]
-                new_parameters.append(new_param)
-            else:
-                raise Exception(f'测试用例中使用的自定义函数的参数:{param}，不存在')
+        param = param.strip()
+        if '=' in param:
+            key, value = param.split('=')
+            value = replace_parameters(value, var, dependent)
+            kwargs[key.strip()] = parse_string_value(value)
         else:
-            new_parameters.append(param)
-    return new_parameters
+            param = replace_parameters(param, var, dependent)
+            args.append(parse_string_value(param))
+    return args, kwargs
 
 
 def build_data(initial_data: dict, var: dict, functions: dict, dependent: dict) -> dict or None:
@@ -122,14 +156,22 @@ def build_data(initial_data: dict, var: dict, functions: dict, dependent: dict) 
                 # 校验是否为函数
                 if is_valid_function(field):
                     functions_name, parameters = match_func_name_and_parameters(field)
-                    # 参数处理
-                    parameters = function_parameters_handing(parameters, var, dependent)
                     if functions_name in functions.keys():
-                        var[field] = functions[functions_name](*parameters)
+                        # 参数处理
+                        args, kwargs = function_parameters_handing(parameters, var, dependent)
+                        function_instance = functions[functions_name](*args, **kwargs)
+                        if isinstance(function_instance, (int, float, list)):
+                            data_str = data_str.replace('\'${' + field + '}\'', json.dumps(function_instance))
+                        else:
+                            data_str = data_str.replace('${' + field + '}', str(function_instance))
+                        var[field] = function_instance
                     else:
                         raise Exception(f'{functions_name}在自定义函数中不存在')
-            var.update(dependent)
-            data = eval(str_template_insert(data_str, var))
+            if var:
+                data_str = str_template_insert(data_str, var)
+            if dependent:
+                data_str = str_template_insert(data_str, dependent)
+            data = eval(data_str)
             return data
         else:
             return initial_data
@@ -157,4 +199,4 @@ def build_case_data(case: CaseInfo.dict, var: dict) -> json or dict or None:
 
 
 if __name__ == '__main__':
-    print(match_func_name_and_parameters('token($user, $passwd)'))
+    print(match_func_name_and_parameters('token()'))
