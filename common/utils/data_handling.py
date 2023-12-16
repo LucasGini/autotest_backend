@@ -171,8 +171,7 @@ def build_data(initial_data: dict, var: dict, functions: dict, dependent: dict) 
                 data_str = str_template_insert(data_str, var)
             if dependent:
                 data_str = str_template_insert(data_str, dependent)
-            data = eval(data_str)
-            return data
+            return eval(data_str)
         else:
             return initial_data
     return None

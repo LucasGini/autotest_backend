@@ -216,7 +216,7 @@ class BaseTest${thread_id}(unittest.TestCase):
         self.test_env = test_env
         self.dependent_method = {}
 
-    def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict or str:
+    def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict:
         """
         构建用例信息
         :param max_depth: 设置最大递归深度,默认3
