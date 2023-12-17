@@ -130,7 +130,7 @@ def function_parameters_handing(parameters: list, var: dict, dependent: dict) ->
         if '=' in param:
             key, value = param.split('=')
             value = replace_parameters(value, var, dependent)
-            kwargs[key.strip()] = parse_string_value(value)
+            kwargs[key.strip()] = parse_string_value(value.strip())
         else:
             param = replace_parameters(param, var, dependent)
             args.append(parse_string_value(param))
