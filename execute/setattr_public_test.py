@@ -1,9 +1,12 @@
+import time
 import jsonpath
 import requests
 import unittest
 import typing
+from django.conf import settings
 from execute.public_test import PublicTestCase
 from common.utils.data_handling import build_case_data
+from common.utils.HTMLReportNew import TestRunner
 
 
 class TestBase(unittest.TestCase):
@@ -189,10 +192,22 @@ class SetattrPublicTestCase(PublicTestCase):
         # 创建测试套件
         # unittest.main()
         suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
-        # 创建测试运行器
-        runner = unittest.TextTestRunner(verbosity=2)
-        # 执行测试套件
+        now = time.strftime('%Y-%m-%d_%H_%M_%S_')
+        print(settings.REPORT_PATH, type(settings.REPORT_PATH))
+        filename = str(settings.REPORT_PATH) + '/' + now + 'result.html'
+        # 测试用例执行器
+        runner = TestRunner(report_file_name='test',  # 报告文件名，如果未赋值，将采用“test+时间戳”
+                            output_path='report',  # 保存文件夹名，默认“report”
+                            title='测试报告',  # 报告标题，默认“测试报告”
+                            description='无测试描述',  # 报告描述，默认“测试描述”
+                            thread_count=1,  # 并发线程数量（无序执行测试），默认数量 1
+                            thread_start_wait=0,  # 各线程启动延迟，默认 0 s
+                            sequential_execution=False,  # 是否按照套件添加(addTests)顺序执行，
+                            # 会等待一个addTests执行完成，再执行下一个，默认 False
+                            # 如果用例中存在 tearDownClass ，建议设置为True，
+                            # 否则 tearDownClass 将会在所有用例线程执行完后才会执行。
+                            # lang='en'
+                            lang='cn'  # 支持中文与英文，默认中文
+                            )
+        # 执行测试用例套件
         runner.run(suite)
-
-
-
