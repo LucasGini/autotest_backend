@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager
 from unittest.suite import TestSuite
 from HTMLReport import TestRunner
-from common.HTMLReport.ResultNew import ResultNew
+from execute.HTMLReport.ResultNew import ResultNew
 
 
 def _isnotsuite(test):

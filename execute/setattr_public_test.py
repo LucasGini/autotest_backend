@@ -6,10 +6,10 @@ import typing
 from apps.cases.models import Precondition, TestCase, DependentMethods
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
-from common.utils.build_methods import create_dynamic_module, get_all_function_from_module
+from execute.build_methods import create_dynamic_module, get_all_function_from_module
 from execute.data_model import CaseInfo
-from common.utils.data_handling import build_case_data
-from common.HTMLReport.HTMLReportNew import HTMLReportNew
+from execute.data_handling import build_case_data
+from execute.HTMLReport.HTMLReportNew import HTMLReportNew
 
 
 class TestBase(unittest.TestCase):
