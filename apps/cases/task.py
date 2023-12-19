@@ -1,5 +1,4 @@
 from celery import shared_task
-from execute.public_test import PublicTestCase
 from execute.setattr_public_test import SetattrPublicTestCase
 
 

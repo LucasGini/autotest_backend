@@ -1,8 +1,15 @@
+import copy
 import jsonpath
 import requests
 import unittest
-from execute.public_test import PublicTestCase
+import typing
+from apps.cases.models import Precondition, TestCase, DependentMethods
+from common.const.basic_const import AGREEMENT_CONST
+from common.const.case_const import METHOD_CONST
+from common.utils.build_methods import create_dynamic_module, get_all_function_from_module
+from execute.data_model import CaseInfo
 from common.utils.data_handling import build_case_data
+from common.HTMLReport.HTMLReportNew import HTMLReportNew
 
 
 class TestBase(unittest.TestCase):
@@ -53,7 +60,7 @@ class TestBase(unittest.TestCase):
             self.get_assert(ass, v0, v1, v2)
 
     @staticmethod
-    def get_data_type(data_type, value):
+    def get_data_type(data_type: str, value: typing.Any) -> typing.Any:
         """
         将数据转换为对应类型
         :param data_type: 数据类型
@@ -134,10 +141,95 @@ class TestBase(unittest.TestCase):
         self.var = {}
 
 
-class SetattrPublicTestCase(PublicTestCase):
+class SetattrPublicTestCase:
     """
     公共测试类
     """
+
+    def __init__(self, case_list, test_env):
+        self.case_list = case_list
+        self.test_env = test_env
+        self.dependent_method = {}
+
+    def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict:
+        """
+        构建用例信息
+        :param max_depth: 设置最大递归深度,默认3
+        :param level: 递归深度
+        :param instance: case实例
+        :return: CaseInfo.dict
+        """
+        if level > max_depth:
+            raise Exception('已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了')
+        # 获取用例信息定义
+        case_info = CaseInfo()
+        case_info.name = instance.case_name
+        case_info.id = instance.id
+        # 构建依赖函数
+        case_info.functions = copy.deepcopy(self.build_dependent_methods(instance.project_id))  # 深度copy，防止后续操作影响
+        try:
+            precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
+            precondition_case_ids = eval(precondition_obj.precondition_case)
+        except Precondition.DoesNotExist:
+            precondition_case_ids = []
+        precondition_cases = []
+        if precondition_case_ids and isinstance(precondition_case_ids, list):
+            for case_id in precondition_case_ids:
+                try:
+                    case_obj = TestCase.objects.get(id=case_id)
+                    # 递归获取构建前置用例
+                    precondition_cases.append(self.build_case_info(case_obj, level + 1))
+                except Exception:
+                    continue
+        case_info.preconditions = precondition_cases
+        case_info.method = METHOD_CONST[instance.method]
+        case_info.url = self.build_test_url(instance)
+        data = eval(instance.data)
+        if isinstance(data, dict):
+            case_info.header = data.get('header', {})
+            case_info.param = data.get('param', {})
+            case_info.body = data.get('body', {})
+            case_info.verify = data.get('verify', [])
+            case_info.fetch = data.get('fetch', [])
+            case_info.dependent = data.get('dependent', {})
+        else:
+            raise Exception('用例数据格式不正确')
+        return case_info.dict()
+
+    def build_test_url(self, case):
+        """
+        构建测试url
+        :param case: 用例实例
+        :return: url
+        """
+        agreement = AGREEMENT_CONST[self.test_env.agreement]
+        hosts = str(self.test_env.hosts)
+        port = str(self.test_env.port)
+        path = str(case.path)
+        if port:
+            url = agreement + '://' + hosts + ':' + port + path
+        else:
+            url = agreement + '://' + hosts + path
+
+        return url
+
+    def build_dependent_methods(self, project_id) -> dict:
+        """
+        构建依赖函数
+        :param project_id: 项目ID
+        :return: {}
+        """
+        try:
+            dependent_obj = DependentMethods.objects.get(project_id=project_id)
+        except Exception:
+            return {}
+        function_str = dependent_obj.dependent_method
+        if function_str:
+            module = create_dynamic_module(function_str)
+            function_dict = get_all_function_from_module(module)
+            # 如果project_id存在dependent_method中，则返回对应的值，否则插入一个新的键值对，并返回function_dict
+            return self.dependent_method.setdefault(project_id, function_dict)
+        return {}
 
     def load_test_case(self):
         """
@@ -188,10 +280,12 @@ class SetattrPublicTestCase(PublicTestCase):
         # 创建测试套件
         # unittest.main()
         suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
-        # 创建测试运行器
-        runner = unittest.TextTestRunner(verbosity=2)
-        # 执行测试套件
+        # 测试用例执行器
+        runner = HTMLReportNew(report_file_name='test',  # 报告文件名，如果未赋值，将采用“test+时间戳”
+                               output_path='report',  # 保存文件夹名，默认“report”
+                               title='测试报告',  # 报告标题，默认“测试报告”
+                               description='无测试描述',  # 报告描述，默认“测试描述”
+                               lang='cn'  # 支持中文与英文，默认中文
+                               )
+        # 执行测试用例套件
         runner.run(suite)
-
-
-

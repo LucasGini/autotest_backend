@@ -135,9 +135,15 @@ class ListDependentMethodsSerializer(CustomModelSerializer):
     依赖方法列表序列化器
     """
 
+    project_name = serializers.SerializerMethodField()
+
     class Meta:
         model = DependentMethods
         fields = '__all__'
+
+    def get_project_name(self, obj):
+        project_name = obj.project.project_name
+        return project_name
 
 
 class CreateDependentMethodsSerializer(CustomModelSerializer):

@@ -1,3 +1,6 @@
+import copy
+import types
+import inspect
 from django.db import transaction
 from rest_framework import generics
 from rest_framework import status
@@ -14,6 +17,7 @@ from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerial
                                     ListDependentMethodsSerializer, CreateDependentMethodsSerializer)
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods
 from apps.cases.task import run_case
+
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -224,6 +228,33 @@ class DependentMethodsViewSet(CustomModelViewSet):
             return CreateDependentMethodsSerializer
         else:
             return self.serializer_class
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+        except Exception as e:
+            raise NotFound(e)
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+        dependent_method = data.get('dependent_method', None)
+        func_list = []
+        if dependent_method:
+            func_detail = {}
+            module = types.ModuleType('dynamic_module')
+            exec(dependent_method, module.__dict__)
+            for func_name in dir(module):
+                # 判断函数是否存在module,且是否可调用
+                if callable(getattr(module, func_name)):
+                    func = module.__dict__[func_name]
+                    func_detail['func_name'] = func_name
+                    func_detail['func_doc'] = func.__doc__
+                    # 获取函数的参数列表（包含默认值）
+                    full_args = inspect.getfullargspec(func).args
+                    func_detail['func_args'] = full_args
+                    # 深度copy
+                    func_list.append(copy.deepcopy(func_detail))
+        data['func_list'] = func_list
+        return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
 
 
 class ExecuteView(views.APIView):

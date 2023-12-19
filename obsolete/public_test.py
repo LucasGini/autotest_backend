@@ -1,12 +1,9 @@
-import json
-import sys
-import string
+import copy
 import threading
 import unittest
-import requests
-import jsonpath
-from execute.case_info import CaseInfo
-from apps.cases.models import Precondition, TestCase
+from common.utils.build_methods import create_dynamic_module, get_all_function_from_module
+from execute.data_model import CaseInfo
+from apps.cases.models import Precondition, TestCase, DependentMethods
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
 from common.utils.data_handling import str_template_insert
@@ -217,21 +214,24 @@ class BaseTest${thread_id}(unittest.TestCase):
     def __init__(self, case_list, test_env):
         self.case_list = case_list
         self.test_env = test_env
+        self.dependent_method = {}
 
-    def build_case_info(self, instance, level=0, max_depth=3):
+    def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict:
         """
         构建用例信息
         :param max_depth: 设置最大递归深度,默认3
         :param level: 递归深度
         :param instance: case实例
-        :return: case_info
+        :return: CaseInfo.dict
         """
         if level > max_depth:
-            return '已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了'
+            raise Exception('已超过最大递归深度, 请检查前置用例是否嵌套超过4次或者循环依赖了')
         # 获取用例信息定义
         case_info = CaseInfo()
         case_info.name = instance.case_name
         case_info.id = instance.id
+        # 构建依赖函数
+        case_info.functions = copy.deepcopy(self.build_dependent_methods(instance.project_id))  # 深度copy，防止后续操作影响
         try:
             precondition_obj = Precondition.objects.get(case_id=instance.id, enable_flag=1)
             precondition_case_ids = eval(precondition_obj.precondition_case)
@@ -251,11 +251,12 @@ class BaseTest${thread_id}(unittest.TestCase):
         case_info.url = self.build_test_url(instance)
         data = eval(instance.data)
         if isinstance(data, dict):
-            case_info.header = data.get('header', None)
-            case_info.param = data.get('param', None)
-            case_info.body = data.get('body', None)
-            case_info.verify = data.get('verify', None)
-            case_info.fetch = data.get('fetch', None)
+            case_info.header = data.get('header', {})
+            case_info.param = data.get('param', {})
+            case_info.body = data.get('body', {})
+            case_info.verify = data.get('verify', [])
+            case_info.fetch = data.get('fetch', [])
+            case_info.dependent = data.get('dependent', {})
         else:
             raise Exception('用例数据格式不正确')
         return case_info.dict()
@@ -276,6 +277,24 @@ class BaseTest${thread_id}(unittest.TestCase):
             url = agreement + '://' + hosts + path
 
         return url
+
+    def build_dependent_methods(self, project_id) -> dict:
+        """
+        构建依赖函数
+        :param project_id: 项目ID
+        :return: {}
+        """
+        try:
+            dependent_obj = DependentMethods.objects.get(project_id=project_id)
+        except Exception:
+            return {}
+        function_str = dependent_obj.dependent_method
+        if function_str:
+            module = create_dynamic_module(function_str)
+            function_dict = get_all_function_from_module(module)
+            # 如果project_id存在dependent_method中，则返回对应的值，否则插入一个新的键值对，并返回function_dict
+            return self.dependent_method.setdefault(project_id, function_dict)
+        return {}
 
     def splice_test_case(self):
         """
@@ -331,4 +350,3 @@ class BaseTest${thread_id}(unittest.TestCase):
             runner = unittest.TextTestRunner(verbosity=2)
             # 执行测试套件
             runner.run(suite)
-

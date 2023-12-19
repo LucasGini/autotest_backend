@@ -1,4 +1,4 @@
-from execute.public_test import PublicTestCase
+from obsolete.public_test import PublicTestCase
 
 
 class AsyncPublicTestCase(PublicTestCase):
