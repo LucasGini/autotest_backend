@@ -19,7 +19,6 @@ from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, D
 from apps.cases.task import run_case
 
 
-
 class ListCreateTestCaseView(generics.ListCreateAPIView):
     """
     测试用例列表创建视图类
