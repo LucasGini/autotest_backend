@@ -309,10 +309,10 @@ class TestRunner(TemplateMixin, TestSuite):
 
         with open(self.path_report_file, "w", encoding="utf8") as report_file:
             report_file.write(output_html)
-        with open(self.path_report_xml_file, "w", encoding="utf-8") as report_xml_file:
-            report_xml_file.write(report_xml)
-        with open(self.path_report_md_file, "w", encoding="utf-8") as report_md_file:
-            report_md_file.write(report_md)
+        # with open(self.path_report_xml_file, "w", encoding="utf-8") as report_xml_file:
+        #     report_xml_file.write(report_xml)
+        # with open(self.path_report_md_file, "w", encoding="utf-8") as report_md_file:
+        #     report_md_file.write(report_md)
 
     def _generate_stylesheet(self):
         return self.STYLESHEET_TMPL

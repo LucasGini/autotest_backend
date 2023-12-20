@@ -288,4 +288,6 @@ class SetattrPublicTestCase:
                             lang='cn'  # 支持中文与英文，默认中文
                             )
         # 执行测试用例套件
-        runner.run(suite)
+        result = runner.run(suite)
+        dir_result = dir(result.result[0]['testCase_object'])
+        print(dir_result)

@@ -16,6 +16,7 @@ from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerial
                                     CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
                                     ListDependentMethodsSerializer, CreateDependentMethodsSerializer)
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods
+from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
 
 
@@ -256,9 +257,9 @@ class DependentMethodsViewSet(CustomModelViewSet):
         return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
 
 
-class ExecuteView(views.APIView):
+class AsyncExecuteView(views.APIView):
     """
-    执行接口
+    异步执行接口
     """
 
     def get(self, request, *args, **kwargs):
@@ -268,4 +269,19 @@ class ExecuteView(views.APIView):
         for i in queryset:
             cases.append(i)
         run_case.delay(cases, env)
+        return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
+
+
+class ExecuteView(views.APIView):
+    """
+    同步执行接口
+    """
+
+    def get(self, request, *args, **kwargs):
+        env = TestEnv.objects.get(id=1, enable_flag=1)
+        queryset = TestCase.objects.all().filter(enable_flag=1, id=20)
+        cases = []
+        for i in queryset:
+            cases.append(i)
+        SetattrPublicTestCase(cases, env).test_main()
         return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
