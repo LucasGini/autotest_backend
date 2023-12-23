@@ -59,6 +59,39 @@ class TestSuite(BaseModel):
         db_table = 'test_suite'
 
 
+class TestReport(BaseModel):
+    """
+    测试报告表
+    """
+    EXECUTE_TYPE = (
+        (10, 'case'),
+        (20, 'project'),
+        (30, 'suite')
+    )
+    EXECUTE_STATUS = (
+        (0, '执行失败'),
+        (1, '执行成功'),
+        (2, '进行中')
+    )
+    RESULT_VALUE = (
+        (0, 'success'),
+        (1, 'failure')
+    )
+    repost_name = models.CharField(verbose_name='测试报告名称', max_length=128)
+    execute_type = models.SmallIntegerField(verbose_name='执行类型', choices=EXECUTE_TYPE)
+    start_at = models.DateTimeField(verbose_name='开始时间')
+    status = models.SmallIntegerField(verbose_name='执行状态', choices=EXECUTE_STATUS, default=2)
+    result = models.SmallIntegerField(verbose_name='结果', choices=RESULT_VALUE, blank=True, null=True)
+    report = models.TextField(verbose_name='测试报告', blank=True, null=True)
+    success_count = models.SmallIntegerField(verbose_name='成功数', default=0)
+    case_count = models.SmallIntegerField(verbose_name='用例数')
+
+    class Meta:
+        db_table = 'test_report'
+        verbose_name = '测试报告表'
+        verbose_name_plural = '测试报告表'
+
+
 class ProjectsInfo(BaseModel):
     """
     项目表

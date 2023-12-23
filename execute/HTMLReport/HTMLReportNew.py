@@ -38,7 +38,8 @@ class TestRunner(TemplateMixin, TestSuite):
     def __init__(self, report_file_name: str = None, log_file_name: str = None, output_path: str = None,
                  title: str = None, description: str = None, tries: int = 0, delay: float = 1, back_off: float = 1,
                  max_delay: float = 120, retry: bool = True, thread_count: int = 1, thread_start_wait: float = 0,
-                 sequential_execution: bool = False, lang: str = "cn", image: bool = True, failed_image: bool = False):
+                 sequential_execution: bool = False, lang: str = "cn", image: bool = True, failed_image: bool = False,
+                 test_report: object = None):
         """测试执行器
 
         :param report_file_name: 报告文件名，如果未赋值，将采用“test+时间戳”
@@ -58,6 +59,7 @@ class TestRunner(TemplateMixin, TestSuite):
         :param lang: ("cn", "en") 支持中文与英文报告输出，默认采用中文
         :param image: 默认支持添加图片，False 放弃所有图片添加
         :param failed_image: true 只有失败才添加图片，成功用例添加的图片会被删除
+        :param test_report: 测试报告实例
         """
         super().__init__()
         self.LANG = lang in ("cn", "en") and lang or "cn"
@@ -67,6 +69,7 @@ class TestRunner(TemplateMixin, TestSuite):
                 self.LANG == "cn" and self.DEFAULT_DESCRIPTION or self.DEFAULT_DESCRIPTION_en
         )
 
+        self.test_report = test_report or None
         self.thread_count = thread_count
         self.thread_start_wait = thread_start_wait
         self.sequential_execution = sequential_execution
@@ -309,10 +312,13 @@ class TestRunner(TemplateMixin, TestSuite):
 
         with open(self.path_report_file, "w", encoding="utf8") as report_file:
             report_file.write(output_html)
-        with open(self.path_report_xml_file, "w", encoding="utf-8") as report_xml_file:
-            report_xml_file.write(report_xml)
-        with open(self.path_report_md_file, "w", encoding="utf-8") as report_md_file:
-            report_md_file.write(report_md)
+        if self.test_report:
+            self.test_report.report = output_html
+            self.test_report.save()
+        # with open(self.path_report_xml_file, "w", encoding="utf-8") as report_xml_file:
+        #     report_xml_file.write(report_xml)
+        # with open(self.path_report_md_file, "w", encoding="utf-8") as report_md_file:
+        #     report_md_file.write(report_md)
 
     def _generate_stylesheet(self):
         return self.STYLESHEET_TMPL

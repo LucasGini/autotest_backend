@@ -2,10 +2,13 @@ import copy
 import types
 import inspect
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework import status
 from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
+from rest_framework.request import Request
+from common.custom_exception import ParamException
 from apps.basics.models import TestEnv
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
@@ -14,9 +17,12 @@ from common.custom_model_viewset import CustomModelViewSet
 from common.utils.default_write import default_write
 from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerializer, ListProjectsInfoSerializer,
                                     CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
-                                    ListDependentMethodsSerializer, CreateDependentMethodsSerializer)
-from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods
+                                    ListDependentMethodsSerializer, CreateDependentMethodsSerializer,
+                                    TestReportSerializer)
+from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
+from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
+from common.const.case_const import ExecuteType
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -256,16 +262,148 @@ class DependentMethodsViewSet(CustomModelViewSet):
         return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
 
 
-class ExecuteView(views.APIView):
+class TestReportModelViewSet(CustomModelViewSet):
     """
-    执行接口
+    测试报告视图集
+    """
+    queryset = TestReport.objects.all().filter(enable_flag=1)
+    serializer_class = TestReportSerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        重写create方法，禁止新增
+        :return:
+        """
+        return CustomResponse(data=[], code=405, msg='禁止新增', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, *args, **kwargs):
+        """
+        重写update方法，禁止修改
+        :return:
+        """
+        return CustomResponse(data=[], code=405, msg='禁止修改', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        """
+        重写partial_update方法，禁止部分修改
+        :return:
+        """
+        return CustomResponse(data=[], code=405, msg='禁止部分修改', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+def case_execute(request: Request):
+    """
+    用例执行方法
+    :param request: 请求参数
+    :return: CustomResponse
     """
 
-    def get(self, request, *args, **kwargs):
-        env = TestEnv.objects.get(id=1, enable_flag=1)
-        queryset = TestCase.objects.all().filter(enable_flag=1)
-        cases = []
-        for i in queryset:
-            cases.append(i)
-        run_case.delay(cases, env)
+    case_id = request.data.get('caseId', [])
+    if not case_id:
+        raise ParamException('caseId参数不能为空')
+    query = Q(id=case_id) & Q(enable_flag=1)
+    queryset = TestCase.objects.all().filter(query)
+    if not queryset:
+        raise NotFound('用例不存在')
+    cases = list(queryset)
+    report_name = cases[0].case_name
+    return cases, report_name
+
+
+def suite_execute(request: Request):
+    """
+    用例集执行方法
+    :param request: 请求参数
+    :return: CustomResponse
+    """
+
+    suite_id = request.data.get('suiteId', None)
+    if suite_id is None:
+        raise ParamException('suiteId参数不能为空')
+    try:
+        test_suite = TestSuite.objects.get(id=suite_id, enable_flag=1)
+    except Exception:
+        raise NotFound('用例集不存在')
+    report_name = test_suite.suite_name
+    test_cases = test_suite.case.all().filter(enable_flag=1)
+    if not test_cases.exists():
+        raise NotFound('用例集不存在用例')
+    cases = list(test_cases)
+    return cases, report_name
+
+
+def project_execute(request: Request):
+    """
+    项目执行方法
+    :param request: 请求参数
+    :return: CustomResponse
+    """
+
+    project_id = request.data.get('projectId', None)
+    if project_id is None:
+        raise ParamException('projectId参数不能为空')
+    query = Q(project_id=project_id) & Q(enable_flag=1)
+    queryset = TestCase.objects.all().filter(query)
+    if not queryset.exists():
+        raise NotFound('该项目id用例不存在')
+    cases = list(queryset)
+    report_name = cases[0].project.project_name
+    return cases, report_name
+
+
+class AsyncExecuteView(views.APIView):
+    """
+    异步执行接口
+    """
+
+    def post(self, request, *args, **kwargs):
+        execute_type = request.data.get('executeType', None)
+        if execute_type is None:
+            raise ParamException('executeType参数不能为空')
+        env_id = request.data.get('envId', None)
+        if env_id is None:
+            raise ParamException('envId参数不能为空')
+        try:
+            env = TestEnv.objects.get(id=env_id, enable_flag=1)
+        except Exception:
+            return CustomResponse(data=[], code=404, msg='环境不存在', status=status.HTTP_404_NOT_FOUND)
+        # 用例执行类型
+        if execute_type == ExecuteType.CASE.value:
+            cases, report_name = case_execute(request)
+        elif execute_type == ExecuteType.PROJECT.value:
+            cases, report_name = project_execute(request)
+        elif execute_type == ExecuteType.SUITE.value:
+            cases, report_name = suite_execute(request)
+        else:
+            return CustomResponse(data=[], code=404, msg='执行类型不存在', status=status.HTTP_404_NOT_FOUND)
+        run_case.delay(cases, env, report_name, execute_type)
+        return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
+
+
+class ExecuteView(views.APIView):
+    """
+    同步执行接口
+    """
+
+    def post(self, request, *args, **kwargs):
+        execute_type = request.data.get('executeType', None)
+        if execute_type is None:
+            raise ParamException('executeType参数不能为空')
+        env_id = request.data.get('envId', None)
+        if env_id is None:
+            raise ParamException('envId参数不能为空')
+        try:
+            env = TestEnv.objects.get(id=env_id, enable_flag=1)
+        except Exception:
+            return CustomResponse(data=[], code=404, msg='环境不存在', status=status.HTTP_404_NOT_FOUND)
+        # 用例执行类型
+        if execute_type == ExecuteType.CASE.value:
+            cases, report_name = case_execute(request)
+        elif execute_type == ExecuteType.PROJECT.value:
+            cases, report_name = project_execute(request)
+        elif execute_type == ExecuteType.SUITE.value:
+            cases, report_name = suite_execute(request)
+        else:
+            return CustomResponse(data=[], code=404, msg='执行类型不存在', status=status.HTTP_404_NOT_FOUND)
+        SetattrPublicTestCase(cases, env, report_name, execute_type).test_main()
         return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
