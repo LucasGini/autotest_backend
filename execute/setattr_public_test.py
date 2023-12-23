@@ -1,9 +1,11 @@
 import copy
+import uuid
 import jsonpath
 import requests
 import unittest
 import typing
-from apps.cases.models import Precondition, TestCase, DependentMethods
+from django.utils import timezone
+from apps.cases.models import Precondition, TestCase, DependentMethods, TestReport
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
 from execute.build_methods import create_dynamic_module, get_all_function_from_module
@@ -146,9 +148,18 @@ class SetattrPublicTestCase:
     公共测试类
     """
 
-    def __init__(self, case_list, test_env):
+    def __init__(self, case_list: list, test_env: object, report_name: str, execute_type: int):
+        """
+        公共测试类
+        :param case_list: 用例列表
+        :param test_env: 测试环境
+        :param report_name: 报告名称
+        :param execute_type: 执行类型
+        """
         self.case_list = case_list
         self.test_env = test_env
+        self.report_name = report_name
+        self.execute_type = execute_type
         self.dependent_method = {}
 
     def build_case_info(self, instance, level=0, max_depth=3) -> CaseInfo.dict:
@@ -234,7 +245,13 @@ class SetattrPublicTestCase:
     def load_test_case(self):
         """
         测试用例加载
+        :return TestCase
         """
+        # 获取唯一事件id
+        event_id = uuid.uuid4()
+        class_name = f'TestBase_{event_id}'
+        class_type = type(class_name, (TestBase,), {})
+
         for instance in self.case_list:
             case_info = self.build_case_info(instance)
 
@@ -264,30 +281,55 @@ class SetattrPublicTestCase:
                 if fetch:
                     self.fetch_data(fetch, response_json)
 
-            if getattr(TestBase, 'case_execute', None) is None:
+            if getattr(class_type, 'case_execute', None) is None:
                 # 将case_execute动态加载到TestBase类，方便递归调用
-                setattr(TestBase, 'case_execute', test_case)
+                setattr(class_type, 'case_execute', test_case)
             # 修改方法描述文档
             test_case.__doc__ = case_info.get('name', None)
             # 使用setattr函数动态创建测试方法
-            setattr(TestBase, f'test_case_id_is_{instance.id}', test_case)
+            setattr(class_type, f'test_case_id_is_{instance.id}', test_case)
+        return class_type
 
     def test_main(self):
         """
         测试主方法
         """
-        self.load_test_case()
+        # 加载测试类
+        test_class = self.load_test_case()
         # 创建测试套件
-        # unittest.main()
-        suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
+        suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
+        case_count = 0
+        for _ in suite:
+            case_count += 1
         # 测试用例执行器
-        runner = TestRunner(report_file_name='test',  # 报告文件名，如果未赋值，将采用“test+时间戳”
-                            output_path='report',  # 保存文件夹名，默认“report”
-                            title='测试报告',  # 报告标题，默认“测试报告”
-                            description='无测试描述',  # 报告描述，默认“测试描述”
-                            lang='cn'  # 支持中文与英文，默认中文
-                            )
-        # 执行测试用例套件
-        result = runner.run(suite)
-        dir_result = dir(result.result[0]['testCase_object'])
-        print(dir_result)
+        test_report = TestReport()
+        test_report.repost_name = self.report_name
+        test_report.execute_type = self.execute_type
+        test_report.start_at = timezone.now()
+        test_report.case_count = case_count
+        test_report.save()
+        try:
+            runner = TestRunner(report_file_name='test',  # 报告文件名，如果未赋值，将采用“test+时间戳”
+                                output_path='report',  # 保存文件夹名，默认“report”
+                                title='测试报告',  # 报告标题，默认“测试报告”
+                                description='无测试描述',  # 报告描述，默认“测试描述”
+                                lang='cn',  # 支持中文与英文，默认中文
+                                test_report=test_report  # 测试报告
+                                )
+            # 执行测试用例套件
+            result = runner.run(suite)
+            test_report.status = 1
+            test_report.success_count = result.success_count
+            # 如果成功数等于用例数，则测试结果为成功，否则为失败
+            if result.success_count == case_count:
+                test_report.result = 0
+            else:
+                test_report.result = 1
+            test_report.save()
+        except Exception:
+            # 如果发生异常，则执行状态为失败
+            test_report.status = 0
+            test_report.save()
+        finally:
+            # 执行完后删除测试类
+            del test_class

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.cases.models import TestCase, TestSuite, ProjectsInfo,Precondition, DependentMethods
+from apps.cases.models import TestCase, TestSuite, ProjectsInfo, Precondition, DependentMethods, TestReport
 from django.db import transaction
 from rest_framework.exceptions import APIException
 from common.utils.default_write import default_write
@@ -156,6 +156,14 @@ class CreateDependentMethodsSerializer(CustomModelSerializer):
         exclude = ('enable_flag', 'created_by', 'updated_by')
 
 
+class TestReportSerializer(CustomModelSerializer):
+    """
+    测试报告序列化器
+    """
+
+    class Meta:
+        model = TestReport
+        exclude = ('report',)
 
 
 

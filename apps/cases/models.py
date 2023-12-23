@@ -59,7 +59,7 @@ class TestSuite(BaseModel):
         db_table = 'test_suite'
 
 
-class TestRepost(BaseModel):
+class TestReport(BaseModel):
     """
     测试报告表
     """
@@ -82,7 +82,7 @@ class TestRepost(BaseModel):
     start_at = models.DateTimeField(verbose_name='开始时间')
     status = models.SmallIntegerField(verbose_name='执行状态', choices=EXECUTE_STATUS, default=2)
     result = models.SmallIntegerField(verbose_name='结果', choices=RESULT_VALUE, blank=True, null=True)
-    repost = models.TextField(verbose_name='测试报告', blank=True, null=True)
+    report = models.TextField(verbose_name='测试报告', blank=True, null=True)
     success_count = models.SmallIntegerField(verbose_name='成功数', default=0)
     case_count = models.SmallIntegerField(verbose_name='用例数')
 

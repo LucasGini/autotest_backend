@@ -3,5 +3,5 @@ from execute.setattr_public_test import SetattrPublicTestCase
 
 
 @shared_task
-def run_case(cases, env):
-    SetattrPublicTestCase(cases, env).test_main()
+def run_case(cases, env, report_name, execute_type):
+    SetattrPublicTestCase(cases, env, report_name, execute_type).test_main()
