@@ -1,30 +1,18 @@
-aiohttp @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_44k_ps5jm7/croot/aiohttp_1694181081849/work
-aiosignal @ file:///tmp/build/80754af9/aiosignal_1637843061372/work
 amqp==5.2.0
-asgiref @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_edg6nzjrx0/croots/recipe/asgiref_1661287549316/work
-async-timeout @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_732x52axrd/croots/recipe/async-timeout_1664876366763/work
-attrs @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_8d7cifg9jt/croot/attrs_1695717834289/work
 BeautifulReport==0.1.3
 billiard==4.2.0
-Brotli @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_01vdzesc6m/croots/recipe/brotli-split_1659616063272/work
 celery==5.3.6
-certifi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_3cotsv2wp9/croot/certifi_1700501675943/work/certifi
-cffi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_44mvycfmuf/croot/cffi_1700254431144/work
 chardet==3.0.4
-charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
 click==8.1.7
 click-didyoumean==0.3.0
 click-plugins==1.1.1
 click-repl==0.3.0
-cryptography @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_19sc_35nzq/croot/cryptography_1694211574676/work
 ddt==1.7.0
-Django @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_066uop7vqa/croots/recipe/django_1661292540858/work
 django-redis==5.4.0
 djangorestframework==3.14.0
 dnspython==2.4.2
 eventlet==0.33.3
 exceptiongroup==1.2.0
-frozenlist @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_6e53v2xx31/croot/frozenlist_1698702576189/work
 greenlet==3.0.1
 HTMLReport==2.4.0
 idna==2.10
@@ -33,14 +21,9 @@ Jinja2==3.0.3
 jsonpath==0.82.2
 kombu==5.3.4
 MarkupSafe==2.1.3
-multidict @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_81upqwhecp/croot/multidict_1665674236996/work
 packaging==23.2
 pluggy==1.3.0
 prompt-toolkit==3.0.41
-pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
-pydantic @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_92rc5e4spx/croot/pydantic_1695798855907/work
-pyOpenSSL @ file:///private/var/folders/c_/qfmhj66j0tn016nkx_th4hxm0000gp/T/abs_7fwdg30481/croot/pyopenssl_1690223429070/work
-PySocks @ file:///Users/builder/ci_310/pysocks_1642536366386/work
 pytest==7.4.3
 python-dateutil==2.8.2
 pytz==2023.3.post1
@@ -48,13 +31,10 @@ PyYAML==5.3.1
 redis==5.0.1
 requests==2.24.0
 six==1.16.0
-sqlparse @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_cb77ukgrpu/croot/sqlparse_1690901947630/work
 tomli==2.0.1
-typing_extensions @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_35a9251r5y/croot/typing_extensions_1690297487409/work
 tzdata==2023.3
 unittestreport==1.5.1
 urllib3==1.25.11
 vine==5.1.0
 wcwidth==0.2.12
 wrapt==1.16.0
-yarl @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_d8a27nidjc/croots/recipe/yarl_1661437080982/work
