@@ -1,6 +1,7 @@
-/autotest_backend/production_settings.py
+/autotest_backend/prd_settings.py
 /prd_manage.py
 /apps/basics/migrations/
 /apps/cases/migrations/
 /apps/users/migrations/
 /report/
+
