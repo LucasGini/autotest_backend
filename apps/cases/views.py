@@ -9,6 +9,8 @@ from rest_framework import status
 from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
 from rest_framework.request import Request
+from rest_framework.filters import OrderingFilter
+from rest_framework.filters import SearchFilter
 from common.custom_exception import ParamException
 from apps.basics.models import TestEnv
 from common.utils.custom_update import custom_update
@@ -270,6 +272,9 @@ class TestReportModelViewSet(CustomModelViewSet):
     queryset = TestReport.objects.all().filter(enable_flag=1)
     serializer_class = TestReportSerializer
     pagination_class = GeneralPage
+    filter_backends = [OrderingFilter, SearchFilter]
+    ordering_fields = ['repost_name', 'execute_type', 'start_at', 'status', 'result', 'success_count', 'case_count']
+    search_fields = ['repost_name', 'execute_type','start_at','status','result','success_count', 'case_count']
 
     @staticmethod
     def get_redis_success_count(data, redis):
