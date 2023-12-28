@@ -5,9 +5,10 @@ import requests
 import unittest
 import typing
 from django.utils import timezone
+from django_redis import get_redis_connection
 from apps.cases.models import Precondition, TestCase, DependentMethods, TestReport
 from common.const.basic_const import AGREEMENT_CONST
-from common.const.case_const import METHOD_CONST
+from common.const.case_const import METHOD_CONST, SUCCESS_COUNT_REDIS_KEY
 from execute.build_methods import create_dynamic_module, get_all_function_from_module
 from execute.data_model import CaseInfo
 from execute.data_handling import build_case_data
@@ -296,6 +297,8 @@ class SetattrPublicTestCase:
         """
         # 加载测试类
         test_class = self.load_test_case()
+        # 获取redis连接
+        redis_conn = get_redis_connection()
         # 创建测试套件
         suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
         case_count = 0
@@ -314,7 +317,8 @@ class SetattrPublicTestCase:
                                 title='测试报告',  # 报告标题，默认“测试报告”
                                 description='无测试描述',  # 报告描述，默认“测试描述”
                                 lang='cn',  # 支持中文与英文，默认中文
-                                test_report=test_report  # 测试报告
+                                test_report=test_report,  # 测试报告
+                                redis_conn = redis_conn
                                 )
             # 执行测试用例套件
             result = runner.run(suite)
@@ -326,6 +330,9 @@ class SetattrPublicTestCase:
             else:
                 test_report.result = 1
             test_report.save()
+            success_count_key = SUCCESS_COUNT_REDIS_KEY.format(test_report.id)
+            if redis_conn.exists(success_count_key):
+                redis_conn.delete(success_count_key)
         except Exception:
             # 如果发生异常，则执行状态为失败
             test_report.status = 0

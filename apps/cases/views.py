@@ -3,6 +3,7 @@ import types
 import inspect
 from django.db import transaction
 from django.db.models import Q
+from django_redis import get_redis_connection
 from rest_framework import generics
 from rest_framework import status
 from rest_framework import views
@@ -22,7 +23,7 @@ from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerial
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
 from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
-from common.const.case_const import ExecuteType
+from common.const.case_const import ExecuteType, SUCCESS_COUNT_REDIS_KEY
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -268,6 +269,36 @@ class TestReportModelViewSet(CustomModelViewSet):
     """
     queryset = TestReport.objects.all().filter(enable_flag=1)
     serializer_class = TestReportSerializer
+    pagination_class = GeneralPage
+
+    @staticmethod
+    def get_redis_success_count(data, redis):
+        """
+        获取redis的success_count值
+        :param data: serializer.data
+        :param redis: redis实例
+        :return:
+        """
+
+        for i in data:
+            redis_key = SUCCESS_COUNT_REDIS_KEY.format(i['id'])
+            success_count = redis.get(redis_key)
+            if success_count:
+                i['success_count'] = int(success_count)
+        return data
+
+    def list(self, request, *args, **kwargs):
+        redis_conn = get_redis_connection()
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = self.get_redis_success_count(serializer.data, redis=redis_conn)
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = self.get_redis_success_count(serializer.data, redis=redis_conn)
+        return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         """
@@ -354,6 +385,13 @@ def project_execute(request: Request):
 class AsyncExecuteView(views.APIView):
     """
     异步执行接口
+    param : {
+        "executeType": 10,
+        "envId": 1,
+        "projectId": 1,
+        "suiteId": 1,
+        "caseId": 2
+        }
     """
 
     def post(self, request, *args, **kwargs):
@@ -383,6 +421,13 @@ class AsyncExecuteView(views.APIView):
 class ExecuteView(views.APIView):
     """
     同步执行接口
+    param : {
+            "executeType": 10,
+            "envId": 1,
+            "projectId": 1,
+            "suiteId": 1,
+            "caseId": 2
+            }
     """
 
     def post(self, request, *args, **kwargs):

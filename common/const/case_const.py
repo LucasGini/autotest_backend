@@ -22,5 +22,9 @@ class ExecuteType(Enum):
     # 用例集执行
     SUITE = 30
 
+
+# test_report.success_count Redis Key
+SUCCESS_COUNT_REDIS_KEY = '{}_success_count'
+
 if __name__ == '__main__':
     print(ExecuteType.CASE.value)

@@ -11,15 +11,20 @@ from HTMLReport.src.tools import save_images
 from HTMLReport.src.tools.result import Result
 from HTMLReport.src.tools.retry_on_exception import retry_lists, no_retry_lists
 from HTMLReport.src.tools.template import ResultStatus
+from common.const.case_const import SUCCESS_COUNT_REDIS_KEY
 
 
 class ResultNew(Result):
 
     def __init__(self, lang, tries, delay, back_off, max_delay, retry, thread_start_wait, failed_image,
-                 thread_count: int = 1):
+                 thread_count: int = 1, test_report: object = None, redis_conn: object = None):
         super().__init__(lang, tries, delay, back_off, max_delay, retry, thread_start_wait, failed_image)
         self.thread_count = thread_count
         self.test_output = ''
+        self.test_report = test_report or None
+        self.redis_conn = redis_conn
+        if test_report:
+            self.success_count_key = SUCCESS_COUNT_REDIS_KEY.format(test_report.id)
 
     def startTest(self, test):
         self.test_output = ''
@@ -142,6 +147,8 @@ class ResultNew(Result):
         self.result_tmp[current_id]["style"][self.result_tmp[current_id]["tries"]] = ResultStatus.PASS
         if current_id not in self.success_set:
             self.success_count += 1
+            if self.test_report and self.redis_conn:
+                self.redis_conn.set(self.success_count_key, self.success_count)
             self.success_set.add(current_id)
         if current_id in self.failure_set:
             self.failure_count -= 1
