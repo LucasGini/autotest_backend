@@ -6,7 +6,7 @@ import multiprocessing
 preload_app = True                   # 通过预加载应用程序，可以加快服务器的启动速度
 workers = 3                          # 并行工作进程数，推荐数量为”（当前的cpu个数*2）+ 1“
 threads = 4                          # 每个工作者的线程数
-bind = '0.0.0.0:8000'                # 监听IP地址和端口
+bind = '0.0.0.0:8002'                # 监听IP地址和端口
 daemon = False                       # 应用是否以daemon方式运行，默认False
 worker_class = 'gevent'              # 工作模式协程，worker进程的工作方式，有sync、eventlet、gevent、tornado、gthread，默认为sync
 worker_connections = 2000            # 设置最大并发量
