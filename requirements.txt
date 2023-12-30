@@ -31,6 +31,7 @@ PyYAML==5.3.1
 redis==5.0.1
 requests==2.24.0
 six==1.16.0
+supervisor==4.2.2
 tomli==2.0.1
 tzdata==2023.3
 unittestreport==1.5.1
