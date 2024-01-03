@@ -24,7 +24,10 @@ class ExecuteType(Enum):
 
 
 # test_report.success_count Redis Key
-SUCCESS_COUNT_REDIS_KEY = '{}_success_count'
+SUCCESS_COUNT_REDIS_KEY = 'success_count_of_report_id_{}'
+
+# test_report.executed_count Redis Key
+EXECUTED_COUNT_REDIS_KEY = 'executed_count_of_report_id_{}'
 
 if __name__ == '__main__':
     print(ExecuteType.CASE.value)

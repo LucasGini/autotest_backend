@@ -11,7 +11,7 @@ from HTMLReport.src.tools import save_images
 from HTMLReport.src.tools.result import Result
 from HTMLReport.src.tools.retry_on_exception import retry_lists, no_retry_lists
 from HTMLReport.src.tools.template import ResultStatus
-from common.const.case_const import SUCCESS_COUNT_REDIS_KEY
+from common.const.case_const import EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
 
 
 class ResultNew(Result):
@@ -24,6 +24,7 @@ class ResultNew(Result):
         self.test_report = test_report or None
         self.redis_conn = redis_conn
         if test_report:
+            self.executed_count_key = EXECUTED_COUNT_REDIS_KEY.format(test_report.id)
             self.success_count_key = SUCCESS_COUNT_REDIS_KEY.format(test_report.id)
 
     def startTest(self, test):
@@ -116,6 +117,8 @@ class ResultNew(Result):
             if "local_delay" in self.result_tmp[current_id]:
                 del self.result_tmp[current_id]["local_delay"]
             # 产生结果
+            if self.test_report and self.redis_conn:
+                self.redis_conn.set(self.executed_count_key, self.testsRun)
             self.result.append(self.result_tmp.pop(current_id))
 
     def addSkip(self, test, reason):

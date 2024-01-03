@@ -8,7 +8,7 @@ from django.utils import timezone
 from django_redis import get_redis_connection
 from apps.cases.models import Precondition, TestCase, DependentMethods, TestReport
 from common.const.basic_const import AGREEMENT_CONST
-from common.const.case_const import METHOD_CONST, SUCCESS_COUNT_REDIS_KEY
+from common.const.case_const import METHOD_CONST, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
 from execute.build_methods import create_dynamic_module, get_all_function_from_module
 from execute.data_model import CaseInfo
 from execute.data_handling import build_case_data
@@ -318,18 +318,22 @@ class SetattrPublicTestCase:
                                 description='无测试描述',  # 报告描述，默认“测试描述”
                                 lang='cn',  # 支持中文与英文，默认中文
                                 test_report=test_report,  # 测试报告
-                                redis_conn = redis_conn
+                                redis_conn=redis_conn     # Redis连接
                                 )
             # 执行测试用例套件
             result = runner.run(suite)
             test_report.status = 1
             test_report.success_count = result.success_count
+            test_report.executed_count = result.testsRun
             # 如果成功数等于用例数，则测试结果为成功，否则为失败
             if result.success_count == case_count:
                 test_report.result = 0
             else:
                 test_report.result = 1
             test_report.save()
+            executed_count_key = EXECUTED_COUNT_REDIS_KEY.format(test_report.id)
+            if redis_conn.exists(executed_count_key):
+                redis_conn.delete(executed_count_key)
             success_count_key = SUCCESS_COUNT_REDIS_KEY.format(test_report.id)
             if redis_conn.exists(success_count_key):
                 redis_conn.delete(success_count_key)

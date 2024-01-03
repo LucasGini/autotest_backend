@@ -2,17 +2,16 @@ import copy
 import types
 import inspect
 from django.db import transaction
-from django.db.models import Q
 from django_redis import get_redis_connection
 from rest_framework import generics
 from rest_framework import status
 from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
-from rest_framework.request import Request
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from common.custom_exception import ParamException
 from apps.basics.models import TestEnv
+from common.utils.api_execute import case_execute, project_execute, suite_execute
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
 from common.custom_response import CustomResponse
@@ -25,7 +24,7 @@ from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerial
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
 from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
-from common.const.case_const import ExecuteType, SUCCESS_COUNT_REDIS_KEY
+from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -274,20 +273,24 @@ class TestReportModelViewSet(CustomModelViewSet):
     pagination_class = GeneralPage
     filter_backends = [OrderingFilter, SearchFilter]
     ordering_fields = ['repost_name', 'execute_type', 'start_at', 'status', 'result', 'success_count', 'case_count']
-    search_fields = ['repost_name', 'execute_type','start_at','status','result','success_count', 'case_count']
+    search_fields = ['repost_name', 'execute_type', 'start_at', 'status', 'result', 'success_count', 'case_count']
 
     @staticmethod
-    def get_redis_success_count(data, redis):
+    def get_redis_count(data, redis):
         """
-        获取redis的success_count值
+        获取redis的executed_count和success_count值
         :param data: serializer.data
         :param redis: redis实例
         :return:
         """
 
         for i in data:
-            redis_key = SUCCESS_COUNT_REDIS_KEY.format(i['id'])
-            success_count = redis.get(redis_key)
+            executed_count_redis_key = EXECUTED_COUNT_REDIS_KEY.format(i['id'])
+            success_count_redis_key = SUCCESS_COUNT_REDIS_KEY.format(i['id'])
+            executed_count = redis.get(executed_count_redis_key)
+            success_count = redis.get(success_count_redis_key)
+            if executed_count:
+                i['executed_count'] = int(executed_count)
             if success_count:
                 i['success_count'] = int(success_count)
         return data
@@ -298,11 +301,11 @@ class TestReportModelViewSet(CustomModelViewSet):
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            data = self.get_redis_success_count(serializer.data, redis=redis_conn)
+            data = self.get_redis_count(serializer.data, redis=redis_conn)
             return self.get_paginated_response(data)
 
         serializer = self.get_serializer(queryset, many=True)
-        data = self.get_redis_success_count(serializer.data, redis=redis_conn)
+        data = self.get_redis_count(serializer.data, redis=redis_conn)
         return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -325,66 +328,6 @@ class TestReportModelViewSet(CustomModelViewSet):
         :return:
         """
         return CustomResponse(data=[], code=405, msg='禁止部分修改', status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-
-def case_execute(request: Request):
-    """
-    用例执行方法
-    :param request: 请求参数
-    :return: CustomResponse
-    """
-
-    case_id = request.data.get('caseId', [])
-    if not case_id:
-        raise ParamException('caseId参数不能为空')
-    query = Q(id=case_id) & Q(enable_flag=1)
-    queryset = TestCase.objects.all().filter(query)
-    if not queryset:
-        raise NotFound('用例不存在')
-    cases = list(queryset)
-    report_name = cases[0].case_name
-    return cases, report_name
-
-
-def suite_execute(request: Request):
-    """
-    用例集执行方法
-    :param request: 请求参数
-    :return: CustomResponse
-    """
-
-    suite_id = request.data.get('suiteId', None)
-    if suite_id is None:
-        raise ParamException('suiteId参数不能为空')
-    try:
-        test_suite = TestSuite.objects.get(id=suite_id, enable_flag=1)
-    except Exception:
-        raise NotFound('用例集不存在')
-    report_name = test_suite.suite_name
-    test_cases = test_suite.case.all().filter(enable_flag=1)
-    if not test_cases.exists():
-        raise NotFound('用例集不存在用例')
-    cases = list(test_cases)
-    return cases, report_name
-
-
-def project_execute(request: Request):
-    """
-    项目执行方法
-    :param request: 请求参数
-    :return: CustomResponse
-    """
-
-    project_id = request.data.get('projectId', None)
-    if project_id is None:
-        raise ParamException('projectId参数不能为空')
-    query = Q(project_id=project_id) & Q(enable_flag=1)
-    queryset = TestCase.objects.all().filter(query)
-    if not queryset.exists():
-        raise NotFound('该项目id用例不存在')
-    cases = list(queryset)
-    report_name = cases[0].project.project_name
-    return cases, report_name
 
 
 class AsyncExecuteView(views.APIView):
