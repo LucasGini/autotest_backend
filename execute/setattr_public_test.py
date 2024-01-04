@@ -318,7 +318,7 @@ class SetattrPublicTestCase:
                                 description='无测试描述',  # 报告描述，默认“测试描述”
                                 lang='cn',  # 支持中文与英文，默认中文
                                 test_report=test_report,  # 测试报告
-                                redis_conn=redis_conn     # Redis连接
+                                redis_conn=redis_conn  # Redis连接
                                 )
             # 执行测试用例套件
             result = runner.run(suite)
@@ -331,12 +331,8 @@ class SetattrPublicTestCase:
             else:
                 test_report.result = 1
             test_report.save()
-            executed_count_key = EXECUTED_COUNT_REDIS_KEY.format(test_report.id)
-            if redis_conn.exists(executed_count_key):
-                redis_conn.delete(executed_count_key)
-            success_count_key = SUCCESS_COUNT_REDIS_KEY.format(test_report.id)
-            if redis_conn.exists(success_count_key):
-                redis_conn.delete(success_count_key)
+            self.delete_redis_key(redis_conn, EXECUTED_COUNT_REDIS_KEY, test_report.id)
+            self.delete_redis_key(redis_conn, SUCCESS_COUNT_REDIS_KEY, test_report.id)
         except Exception:
             # 如果发生异常，则执行状态为失败
             test_report.status = 0
@@ -344,3 +340,16 @@ class SetattrPublicTestCase:
         finally:
             # 执行完后删除测试类
             del test_class
+
+    @staticmethod
+    def delete_redis_key(redis_conn, key_format, test_report_id):
+        """
+        删除Redis key
+        :param redis_conn:
+        :param key_format:
+        :param test_report_id:
+        :return:
+        """
+        key = key_format.format(test_report_id)
+        if redis_conn.exists(key):
+            redis_conn.delete(key)
