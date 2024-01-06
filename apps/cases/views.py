@@ -2,6 +2,8 @@ import copy
 import types
 import inspect
 from django.db import transaction
+from django.http import HttpResponse
+from django.utils import timezone
 from django_redis import get_redis_connection
 from rest_framework import generics
 from rest_framework import status
@@ -336,12 +338,27 @@ class DownloadReportView(views.APIView):
     """
     @staticmethod
     def get_report_status_message(status):
+        """
+        根据状态返回对应的提示
+        :param status:
+        :return:
+        """
         if status == ReportStatus.EXECUTED_SUCCESS.value:
             return '报告下载'
         elif status == ReportStatus.EXECUTING.value:
             return '任务执行中'
         else:
             return '任务执行失败'
+
+    @staticmethod
+    def get_report_name(extension='html'):
+        """
+        生成测试报告名称
+        :param extension: 文件扩展名，默认为html
+        :return
+        """
+        formatted_datetime = timezone.localtime().strftime('%Y_%m_%d_%H_%M_%S')
+        return 'testReport_{}.{}'.format(formatted_datetime, extension)
 
     def get(self, request, *args, **kwargs):
         report_id = request.query_params.get('reportId', None)
@@ -353,8 +370,8 @@ class DownloadReportView(views.APIView):
             return CustomResponse(data=[], code=404, msg='报告不存在', status=status.HTTP_404_NOT_FOUND)
         status_message = self.get_report_status_message(report.status)
         if report.status == ReportStatus.EXECUTED_SUCCESS.value:
-            response = CustomResponse(report.report, content_type='application/octet-stream')
-            response['Content-Disposition'] = 'attachment; filename={}.html'.format(report.repost_name)
+            response = HttpResponse(report.report, content_type='text/html')
+            response['Content-Disposition'] = 'attachment; filename={}'.format(self.get_report_name())
             return response
         else:
             return CustomResponse(data=[], code=404, msg=status_message, status=status.HTTP_404_NOT_FOUND)
