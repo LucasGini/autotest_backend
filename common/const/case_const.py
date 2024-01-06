@@ -23,6 +23,18 @@ class ExecuteType(Enum):
     SUITE = 30
 
 
+class ReportStatus(Enum):
+    """
+    报告状态枚举
+    """
+    # 执行失败
+    EXECUTED_FAILED = 0
+    # 执行成功
+    EXECUTED_SUCCESS = 1
+    # 执行中
+    EXECUTING = 2
+
+
 # test_report.success_count Redis Key
 SUCCESS_COUNT_REDIS_KEY = 'success_count_of_report_id_{}'
 

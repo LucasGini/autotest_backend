@@ -24,7 +24,7 @@ from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerial
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
 from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
-from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
+from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY, ReportStatus
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -328,6 +328,36 @@ class TestReportModelViewSet(CustomModelViewSet):
         :return:
         """
         return CustomResponse(data=[], code=405, msg='禁止部分修改', status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class DownloadReportView(views.APIView):
+    """
+    下载报告
+    """
+    @staticmethod
+    def get_report_status_message(status):
+        if status == ReportStatus.EXECUTED_SUCCESS.value:
+            return '报告下载'
+        elif status == ReportStatus.EXECUTING.value:
+            return '任务执行中'
+        else:
+            return '任务执行失败'
+
+    def get(self, request, *args, **kwargs):
+        report_id = request.query_params.get('reportId', None)
+        if report_id is None:
+            raise ParamException('reportId参数不能为空')
+        try:
+            report = TestReport.objects.get(id=report_id, enable_flag=1)
+        except Exception:
+            return CustomResponse(data=[], code=404, msg='报告不存在', status=status.HTTP_404_NOT_FOUND)
+        status_message = self.get_report_status_message(report.status)
+        if report.status == ReportStatus.EXECUTED_SUCCESS.value:
+            response = CustomResponse(report.report, content_type='application/octet-stream')
+            response['Content-Disposition'] = 'attachment; filename={}.html'.format(report.repost_name)
+            return response
+        else:
+            return CustomResponse(data=[], code=404, msg=status_message, status=status.HTTP_404_NOT_FOUND)
 
 
 class AsyncExecuteView(views.APIView):
