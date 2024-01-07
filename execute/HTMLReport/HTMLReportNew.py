@@ -39,7 +39,7 @@ class TestRunner(TemplateMixin, TestSuite):
                  title: str = None, description: str = None, tries: int = 0, delay: float = 1, back_off: float = 1,
                  max_delay: float = 120, retry: bool = True, thread_count: int = 1, thread_start_wait: float = 0,
                  sequential_execution: bool = False, lang: str = "cn", image: bool = True, failed_image: bool = False,
-                 test_report: object = None):
+                 test_report: object = None, redis_conn: object = None):
         """测试执行器
 
         :param report_file_name: 报告文件名，如果未赋值，将采用“test+时间戳”
@@ -60,6 +60,7 @@ class TestRunner(TemplateMixin, TestSuite):
         :param image: 默认支持添加图片，False 放弃所有图片添加
         :param failed_image: true 只有失败才添加图片，成功用例添加的图片会被删除
         :param test_report: 测试报告实例
+        :param redis_conn: redis连接实例
         """
         super().__init__()
         self.LANG = lang in ("cn", "en") and lang or "cn"
@@ -70,6 +71,7 @@ class TestRunner(TemplateMixin, TestSuite):
         )
 
         self.test_report = test_report or None
+        self.redis_conn = redis_conn or None
         self.thread_count = thread_count
         self.thread_start_wait = thread_start_wait
         self.sequential_execution = sequential_execution
@@ -165,7 +167,7 @@ class TestRunner(TemplateMixin, TestSuite):
             logging.getLogger().setLevel(logging.DEBUG)
 
         result = ResultNew(self.LANG, self.tries, self.delay, self.back_off, self.max_delay, self.retry,
-                           self.thread_start_wait, self.failed_image, self.thread_count)
+                           self.thread_start_wait, self.failed_image, self.thread_count, self.test_report, self.redis_conn)
         if self.LANG == "cn":
             logging.info(f"预计并发线程数：{str(self.thread_count)}")
         else:
@@ -206,7 +208,8 @@ class TestRunner(TemplateMixin, TestSuite):
                 with ThreadPoolExecutor(max_workers=threadSuite) as ts:
                     for suite in test:
                         __result = ResultNew(self.LANG, self.tries, self.delay, self.back_off, self.max_delay,
-                                             self.retry, self.thread_start_wait, self.failed_image, self.thread_count)
+                                             self.retry, self.thread_start_wait, self.failed_image, self.thread_count,
+                                             self.test_report, self.redis_conn)
                         self.result_list.append(__result)
                         ts.submit(suite.run, result=__result)
                         time.sleep(1)

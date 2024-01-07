@@ -160,12 +160,13 @@ class TestReportSerializer(CustomModelSerializer):
     """
     测试报告序列化器
     """
+    start_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    created_date = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    updated_date = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
 
     class Meta:
         model = TestReport
         exclude = ('report',)
-
-
 
 
 

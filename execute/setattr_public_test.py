@@ -5,9 +5,10 @@ import requests
 import unittest
 import typing
 from django.utils import timezone
+from django_redis import get_redis_connection
 from apps.cases.models import Precondition, TestCase, DependentMethods, TestReport
 from common.const.basic_const import AGREEMENT_CONST
-from common.const.case_const import METHOD_CONST
+from common.const.case_const import METHOD_CONST, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
 from execute.build_methods import create_dynamic_module, get_all_function_from_module
 from execute.data_model import CaseInfo
 from execute.data_handling import build_case_data
@@ -296,6 +297,8 @@ class SetattrPublicTestCase:
         """
         # 加载测试类
         test_class = self.load_test_case()
+        # 获取redis连接
+        redis_conn = get_redis_connection()
         # 创建测试套件
         suite = unittest.TestLoader().loadTestsFromTestCase(test_class)
         case_count = 0
@@ -314,18 +317,22 @@ class SetattrPublicTestCase:
                                 title='测试报告',  # 报告标题，默认“测试报告”
                                 description='无测试描述',  # 报告描述，默认“测试描述”
                                 lang='cn',  # 支持中文与英文，默认中文
-                                test_report=test_report  # 测试报告
+                                test_report=test_report,  # 测试报告
+                                redis_conn=redis_conn  # Redis连接
                                 )
             # 执行测试用例套件
             result = runner.run(suite)
             test_report.status = 1
             test_report.success_count = result.success_count
+            test_report.executed_count = result.testsRun
             # 如果成功数等于用例数，则测试结果为成功，否则为失败
             if result.success_count == case_count:
                 test_report.result = 0
             else:
                 test_report.result = 1
             test_report.save()
+            self.delete_redis_key(redis_conn, EXECUTED_COUNT_REDIS_KEY, test_report.id)
+            self.delete_redis_key(redis_conn, SUCCESS_COUNT_REDIS_KEY, test_report.id)
         except Exception:
             # 如果发生异常，则执行状态为失败
             test_report.status = 0
@@ -333,3 +340,16 @@ class SetattrPublicTestCase:
         finally:
             # 执行完后删除测试类
             del test_class
+
+    @staticmethod
+    def delete_redis_key(redis_conn, key_format, test_report_id):
+        """
+        删除Redis key
+        :param redis_conn:
+        :param key_format:
+        :param test_report_id:
+        :return:
+        """
+        key = key_format.format(test_report_id)
+        if redis_conn.exists(key):
+            redis_conn.delete(key)

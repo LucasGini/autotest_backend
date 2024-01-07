@@ -84,6 +84,7 @@ class TestReport(BaseModel):
     result = models.SmallIntegerField(verbose_name='结果', choices=RESULT_VALUE, blank=True, null=True)
     report = models.TextField(verbose_name='测试报告', blank=True, null=True)
     success_count = models.SmallIntegerField(verbose_name='成功数', default=0)
+    executed_count = models.SmallIntegerField(verbose_name='执行数', default=0)
     case_count = models.SmallIntegerField(verbose_name='用例数')
 
     class Meta:

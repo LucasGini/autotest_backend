@@ -22,5 +22,24 @@ class ExecuteType(Enum):
     # 用例集执行
     SUITE = 30
 
+
+class ReportStatus(Enum):
+    """
+    报告状态枚举
+    """
+    # 执行失败
+    EXECUTED_FAILED = 0
+    # 执行成功
+    EXECUTED_SUCCESS = 1
+    # 执行中
+    EXECUTING = 2
+
+
+# test_report.success_count Redis Key
+SUCCESS_COUNT_REDIS_KEY = 'success_count_of_report_id_{}'
+
+# test_report.executed_count Redis Key
+EXECUTED_COUNT_REDIS_KEY = 'executed_count_of_report_id_{}'
+
 if __name__ == '__main__':
     print(ExecuteType.CASE.value)

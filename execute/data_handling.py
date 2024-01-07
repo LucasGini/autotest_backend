@@ -102,14 +102,10 @@ def replace_parameters(value: str, var: dict, dependent: dict):
     if value.startswith('$'):
         # 去除$和空格
         param = value.replace('$', '').strip()
-        if param in dependent.keys():
-            new_param = dependent[param]
-            return new_param
-        elif param in var.keys():
-            new_param = var[param]
-            return new_param
-        else:
+        new_param = dependent.get(param, var.get(param))
+        if not new_param:
             raise Exception(f'测试用例中使用的自定义函数的参数:{param}，不存在')
+        return new_param
     else:
         return value
 
