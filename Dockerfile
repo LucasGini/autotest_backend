@@ -9,6 +9,6 @@ WORKDIR /home/lidongqiang/autotest_backend
 # 复制项目到容器中
 ADD . /home/lidongqiang/autotest_backend
 # 安装依赖
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 # 映射端口
 EXPOSE 8000
