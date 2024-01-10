@@ -1,0 +1,70 @@
+version: "3"
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=autotest_backend
+    command: [
+      '--character-set-server=utf8mb4',
+      '--collation-server=utf8mb4_unicode_ci'
+    ]
+
+  redis:
+    image: redis:6.2.6
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - /home/docker/redis/data:/data
+    expose:
+      - "6379"
+    command: [
+       'redis-server /etc/redis/redis.conf',
+       '--appendonly yes',
+       '--requirepass 123456',
+       '--bind 0.0.0.0'
+    ]
+
+
+  autotest_backend:
+    image: 47.106.245.146/autotest_backend/autotest_backend:1.0.1
+    container_name: autotest
+    command: /bin/bash -c "python manage.py makemigrations && python manager.py migrate && gunicorn -c gunicorn.py autotest_backend.wsgi:application"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    expose:
+      - "8000"
+    links:
+      - db:mydb
+      - redis:myredis
+    restart: always
+    environment:
+      - MYSQL_HOST=mydb
+      - MYSQL_DB=autotest_backend
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=123456
+
+
+  nginx:
+    image: nginx:1.19.12
+    container_name: nginx
+    ports:
+      - "88:88"
+    depends_on:
+      - autotest_backend
+    expose:
+      - "88"
+    links:
+      - autotest_backend:myweb
+    restart: always
+
+
