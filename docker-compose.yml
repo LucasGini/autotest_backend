@@ -19,8 +19,8 @@ services:
     build:
       context: ./conf/redis
       dockerfile: Dockerfile
-    image: redis:6.2.5
-    container_name: redis
+    image: redis
+    container_name: redis_auto
     ports:
       - "6379:6379"
     volumes:
@@ -70,7 +70,7 @@ services:
       context: ./conf/nginx
       dockerfile: Dockerfile
     image: nginx
-    container_name: nginx
+    container_name: nginx_auto
     ports:
       - "88:88"
     depends_on:
@@ -80,5 +80,7 @@ services:
     links:
       - autotest_backend:myweb
     restart: always
+    command:
+      - nginx -g "daemon off;"
 
 
