@@ -16,23 +16,24 @@ services:
     ]
 
   redis:
-    build:
-      context: ./conf/redis
-      dockerfile: Dockerfile
-    image: redis
+    image: redis:6.2.5
     container_name: redis_auto
     ports:
       - "6379:6379"
     volumes:
-      - /home/docker/redis/data:/data
+      - ./redis/data:/data
+      - ./redis/conf/redis.conf:/etc/redis/redis.conf
     expose:
       - "6379"
-    command: [
-       'redis-server /etc/redis/redis.conf',
-       '--appendonly yes',
-       '--requirepass 123456',
-       '--bind 0.0.0.0'
-    ]
+    command:
+      - "redis-server"
+      - "/etc/redis/redis.conf"
+      - "--appendonly"
+      - "yes"
+      - "--requirepass"
+      - "123456"
+      - "--bind"
+      - "0.0.0.0"
     restart: always
 
 
@@ -42,12 +43,14 @@ services:
       dockerfile: Dockerfile
     image: autotest_backend:1.0.0
     container_name: autotest
-    command: /bin/bash -c "python manage.py makemigrations && python manager.py migrate && gunicorn -c gunicorn.py autotest_backend.wsgi:application"
+    command: /bin/bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn -c gunicorn.py autotest_backend.wsgi:application"
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: "service_started"
+      redis:
+        condition: "service_started"
     expose:
       - "8000"
     links:
@@ -74,7 +77,8 @@ services:
     ports:
       - "88:88"
     depends_on:
-      - autotest_backend
+      autotest_backend:
+        condition: "service_started"
     expose:
       - "88"
     links:
