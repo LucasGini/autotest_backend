@@ -6,7 +6,7 @@ WORKDIR /data
 # 创建目录
 RUN mkdir -p /etc/redis
 # 复制配置文件
-COPY redis.conf /etc/redis/redis.conf
+COPY ./conf/redis/redis.conf /etc/redis/redis.conf
 # 映射端口
 EXPOSE 6379
 # 启动redis服务

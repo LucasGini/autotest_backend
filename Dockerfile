@@ -1,5 +1,5 @@
 # 基础镜像，基于Python3.10.13
-FROM python:3.10.13-slim
+FROM python:3.10.13
 # 维护者信息
 MAINTAINER lucasGini <dongqianglucas@gmail.com>
 # 创建目录
