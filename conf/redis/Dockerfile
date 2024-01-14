@@ -10,4 +10,4 @@ COPY redis.conf /etc/redis/redis.conf
 # 映射端口
 EXPOSE 6379
 # 启动redis服务
-CMD ["redis-server", "/etc/redis/redis.conf", "--daemonize yes", "--bind 0.0.0.0"]
+CMD ["redis-server", "/etc/redis/redis.conf", "--appendonly yes", "--bind 0.0.0.0", "--requirepass 123456"]
