@@ -4,9 +4,9 @@ MAINTAINER lucasgini <dongqianglucas@gmail.com>
 # 设置工作目录
 WORKDIR /data
 # 创建目录
-RUN mkdir -p /etc/redis
+RUN mkdir -p /etc/redis && touch /etc/redis/redis.conf
 # 复制配置文件
-COPY ./conf/redis/redis.conf /etc/redis/redis.conf
+COPY redis.conf /etc/redis/redis.conf
 # 映射端口
 EXPOSE 6379
 # 启动redis服务
