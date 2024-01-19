@@ -8,9 +8,9 @@ services:
     expose:
       - "3306"
     volumes:
-      - /home/lidongqiang/mysql/data:/var/lib/mysql
-      - /home/lidongqiang/mysql/conf:/etc/mysql/conf.d
-      - /home/lidongqiang/mysql/data:/var/lib/mysql
+      - /home/app/mysql/data:/var/lib/mysql
+      - /home/app/mysql/conf:/etc/mysql/conf.d
+      - /home/app/mysql/data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=123456
       - MYSQL_DATABASE=autotest_backend
