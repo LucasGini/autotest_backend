@@ -42,7 +42,7 @@
         let addButton;
 
         /**
-         * The "Add another MyModel" button below the inline forms.
+         * The "Add another TestOrder" button below the inline forms.
          */
         const addInlineAddButton = function() {
             if (addButton === null) {
