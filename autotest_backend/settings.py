@@ -145,10 +145,10 @@ REST_FRAMEWORK = {
 
 # 配置 Celery
 # Broker配置,使用redis作为消息中间件
-CELERY_BROKER_URL = f"redis://:{os.getenv('REDIS_PASSWORD', 123456)}@{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
+CELERY_BROKER_URL = f"redis://:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', 6379)}/0"
 
 # backend配置，这里使用redis
-CELERY_RESULT_BACKEND = f"redis://:{os.getenv('REDIS_PASSWORD', 123456)}@{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/0"
+CELERY_RESULT_BACKEND = f"redis://:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', 6379)}/0"
 
 CELERY_TASK_SERIALIZER = 'pickle'
 
@@ -169,7 +169,7 @@ CACHES = {
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/1",
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': f"{os.getenv('REDIS_PASSWORD', 123456)}"
+            'PASSWORD': f"{os.getenv('REDIS_PASSWORD', '')}"
         }
     }
 }
