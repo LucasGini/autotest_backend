@@ -11,6 +11,7 @@ from rest_framework import views
 from rest_framework.exceptions import NotFound, APIException
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
+from apps.cases.request.case_request_model import ExecuteRequestModel, AsyncExecuteRequestModel
 from common.custom_exception import ParamException
 from apps.basics.models import TestEnv
 from common.utils.api_execute import case_execute, project_execute, suite_execute
@@ -390,60 +391,51 @@ class AsyncExecuteView(views.APIView):
     """
 
     def post(self, request, *args, **kwargs):
-        execute_type = request.data.get('executeType', None)
-        if execute_type is None:
+        request_data = AsyncExecuteRequestModel(**request.data)
+        if request_data.executeType is None:
             raise ParamException('executeType参数不能为空')
-        env_id = request.data.get('envId', None)
-        if env_id is None:
+        if request_data.envId is None:
             raise ParamException('envId参数不能为空')
         try:
-            env = TestEnv.objects.get(id=env_id, enable_flag=1)
+            env = TestEnv.objects.get(id=request_data.envId, enable_flag=1)
         except Exception:
             return CustomResponse(data=[], code=404, msg='环境不存在', status=status.HTTP_404_NOT_FOUND)
         # 用例执行类型
-        if execute_type == ExecuteType.CASE.value:
+        if request_data.executeType == ExecuteType.CASE.value:
             cases, report_name = case_execute(request)
-        elif execute_type == ExecuteType.PROJECT.value:
+        elif request_data.executeType == ExecuteType.PROJECT.value:
             cases, report_name = project_execute(request)
-        elif execute_type == ExecuteType.SUITE.value:
+        elif request_data.executeType == ExecuteType.SUITE.value:
             cases, report_name = suite_execute(request)
         else:
             return CustomResponse(data=[], code=404, msg='执行类型不存在', status=status.HTTP_404_NOT_FOUND)
-        run_case.delay(cases, env, report_name, execute_type)
+        run_case.delay(cases, env, report_name, request_data.executeType)
         return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
 
 
 class ExecuteView(views.APIView):
     """
     同步执行接口
-    param : {
-            "executeType": 10,
-            "envId": 1,
-            "projectId": 1,
-            "suiteId": 1,
-            "caseId": 2
-            }
     """
 
     def post(self, request, *args, **kwargs):
-        execute_type = request.data.get('executeType', None)
-        if execute_type is None:
+        request_data = ExecuteRequestModel(**request.data)
+        if request_data.executeType is None:
             raise ParamException('executeType参数不能为空')
-        env_id = request.data.get('envId', None)
-        if env_id is None:
+        if request_data.envId is None:
             raise ParamException('envId参数不能为空')
         try:
-            env = TestEnv.objects.get(id=env_id, enable_flag=1)
-        except Exception:
+            env = TestEnv.objects.get(id=request_data.envId, enable_flag=1)
+        except TestEnv.DoesNotExist:
             return CustomResponse(data=[], code=404, msg='环境不存在', status=status.HTTP_404_NOT_FOUND)
         # 用例执行类型
-        if execute_type == ExecuteType.CASE.value:
+        if request_data.executeType == ExecuteType.CASE.value:
             cases, report_name = case_execute(request)
-        elif execute_type == ExecuteType.PROJECT.value:
+        elif request_data.executeType == ExecuteType.PROJECT.value:
             cases, report_name = project_execute(request)
-        elif execute_type == ExecuteType.SUITE.value:
+        elif request_data.executeType == ExecuteType.SUITE.value:
             cases, report_name = suite_execute(request)
         else:
             return CustomResponse(data=[], code=404, msg='执行类型不存在', status=status.HTTP_404_NOT_FOUND)
-        SetattrPublicTestCase(cases, env, report_name, execute_type).test_main()
+        SetattrPublicTestCase(cases, env, report_name, request_data.executeType).test_main()
         return CustomResponse(data=[], code=200, msg='OK', status=status.HTTP_200_OK)
