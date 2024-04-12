@@ -5,7 +5,7 @@ from apps.cases.views import (ListCreateTestCaseView, AsyncExecuteView, ExecuteV
                               DownloadReportView)
 from rest_framework.routers import DefaultRouter
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register('project', ProjectsInfoModelViewSet, basename='project')
 router.register('suite', TestSuiteModelViewSet, basename='test_suite')
 router.register('dependent', DependentMethodsViewSet, basename='dependent_methods')
