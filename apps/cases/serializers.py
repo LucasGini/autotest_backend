@@ -93,9 +93,10 @@ class CreateTestCaseSerializer(CustomModelSerializer):
             default_write(instance, request)
             # 新增前置条件
             precondition_data = validated_data.get('precondition', None)
-            if precondition_data:
+            precondition_case = precondition_data.get('precondition_case', None)
+            if precondition_data and precondition_case != '[]':
                 precondition = Precondition()
-                precondition.precondition_case = precondition_data.get('precondition_case', None)
+                precondition.precondition_case = precondition_case
                 precondition.case = instance
                 default_write(precondition, request)
         except Exception as e:
