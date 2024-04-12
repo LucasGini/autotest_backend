@@ -1,8 +1,9 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from apps.basics.models import TestEnv
-from apps.basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers
+from apps.basics.models import TestEnv, SystemMenu
+from apps.basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers, ListSystemMenuSerializers, \
+    CreateSystemMenuSerializers
 from common.custom_model_viewset import CustomModelViewSet
 from common.custom_response import CustomResponse
 from common.utils.custom_update import custom_update
@@ -52,6 +53,56 @@ class TestEnvModelViewSet(CustomModelViewSet):
         return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
 
+class SystemMenuModelViewSet(CustomModelViewSet):
+    """
+    系统菜单视图集
+    """
 
+    queryset = SystemMenu.objects.filter(enable_flag=1)
+    serializer_class = ListSystemMenuSerializers
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_class
+        elif self.action == 'create' or self.action == 'update':
+            return CreateSystemMenuSerializers
+        else:
+            return self.serializer_class
 
+    def _recursive_menu_tree(self, menu_list, parent_id=None):
+        """
+        递归生成菜单树
+        :param menu_list:
+        :param parent_id:
+        :return:
+        """
+        tree = []
+        for menu in menu_list:
+            if menu.parent_id == parent_id:
+                children = self._recursive_menu_tree(menu_list, menu.id)
+                menu_dict = {
+                    'id': menu.id,
+                    'name': menu.name,
+                    'path': menu.path,
+                    'is_hidden': menu.is_hidden,
+                    'component': menu.component,
+                    'icon': menu.icon,
+                    'children': children if children else [],
+                }
+                tree.append(menu_dict)
+        return tree
+
+    def list(self, request, *args, **kwargs):
+        """
+        获取菜单树
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        try:
+            menus = self.get_queryset().order_by('order_num')
+        except Exception as e:
+            raise APIException(f'查询系统菜单失败：{e}')
+        menu_tree = self._recursive_menu_tree(menus)
+        return CustomResponse(menu_tree, code=200, msg='OK', status=status.HTTP_200_OK)
