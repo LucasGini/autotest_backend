@@ -36,16 +36,19 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'rest_framework',
+    'django_filters',
+    'corsheaders',
     'apps.users',
     'apps.basics',
-    'apps.cases'
+    'apps.cases',
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -134,7 +137,9 @@ STATIC_ROOT = BASE_DIR / "static"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'common.custom_exception.custom_exception_handler'
+    'EXCEPTION_HANDLER': 'common.custom_exception.custom_exception_handler',
+    # 配置过滤器
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
 
 # 配置 Celery
@@ -163,7 +168,12 @@ CACHES = {
         'LOCATION': f"redis://{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', '6379')}/1",
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': f"{os.getenv('REDIS_PASSWORD', None)}"
+            'PASSWORD': os.getenv('REDIS_PASSWORD', '')
         }
     }
 }
+
+# 配置允许跨域的地址
+CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+# 配置运行所有请求
+CORS_ALLOWED_HEADERS = ('*')

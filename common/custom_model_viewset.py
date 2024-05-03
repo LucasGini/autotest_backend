@@ -1,3 +1,5 @@
+import time
+
 from rest_framework.exceptions import NotFound
 from common.custom_response import CustomResponse
 from rest_framework import status
@@ -24,7 +26,9 @@ class CustomModelViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return CustomResponse(serializer.data, code=201, msg='OK', status=status.HTTP_201_CREATED, headers=headers)
+        # 获取新增成功的的实例，重新进行序列化
+        after_serializer = self.get_serializer(serializer.instance)
+        return CustomResponse(after_serializer.data, code=201, msg='OK', status=status.HTTP_201_CREATED, headers=headers)
 
     def retrieve(self, request, *args, **kwargs):
         try:
