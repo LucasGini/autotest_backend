@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import APIException
+from apps.basics.filters import TestEnvFilter
 from apps.basics.models import TestEnv, SystemMenu
 from apps.basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers, ListSystemMenuSerializers, \
     CreateSystemMenuSerializers
@@ -8,6 +9,8 @@ from common.custom_model_viewset import CustomModelViewSet
 from common.custom_response import CustomResponse
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
+from rest_framework.filters import OrderingFilter
+from django_filters import rest_framework as filters
 
 
 class TestEnvModelViewSet(CustomModelViewSet):
@@ -17,7 +20,10 @@ class TestEnvModelViewSet(CustomModelViewSet):
 
     queryset = TestEnv.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter)
     serializer_class = ListTestEnvSerializers
+    # 自定义过滤
+    filterset_class = TestEnvFilter
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -87,6 +93,8 @@ class SystemMenuModelViewSet(CustomModelViewSet):
                     'is_hidden': menu.is_hidden,
                     'component': menu.component,
                     'icon': menu.icon,
+                    'order_num': menu.order_num,
+                    'parent_id': menu.parent_id,
                     'children': children if children else [],
                 }
                 tree.append(menu_dict)
@@ -106,3 +114,24 @@ class SystemMenuModelViewSet(CustomModelViewSet):
             raise APIException(f'查询系统菜单失败：{e}')
         menu_tree = self._recursive_menu_tree(menus)
         return CustomResponse(menu_tree, code=200, msg='OK', status=status.HTTP_200_OK)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        """
+        删除菜单
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            # 查询是否有子菜单,有则删除菜单
+            child_menus = SystemMenu.objects.filter(parent_id=instance.id, enable_flag=1)
+            if child_menus:
+                for child_menu in child_menus:
+                    self.perform_destroy(child_menu)
+        except Exception as e:
+            raise APIException(f'删除菜单失败：{e}')
+        return CustomResponse(code=204, msg='OK', status=status.HTTP_204_NO_CONTENT)

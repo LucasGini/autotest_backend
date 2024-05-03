@@ -15,7 +15,7 @@ class TestEnv(BaseModel):
     env_name = models.CharField(verbose_name='环境名称', max_length=256)
     agreement = models.SmallIntegerField(verbose_name='协议', choices=AGREEMENT_CODE)
     hosts = models.CharField(verbose_name='域名或ip', max_length=256)
-    port = models.CharField(verbose_name='端口号', max_length=64)
+    port = models.CharField(verbose_name='端口号', max_length=64, blank=True, null=True)
     remark = models.CharField(verbose_name='简要说明', max_length=256, blank=True, null=True)
 
     def __str__(self):
@@ -35,10 +35,10 @@ class SystemMenu(BaseModel):
     name = models.CharField(verbose_name='菜单名称', max_length=64)
     path = models.CharField(verbose_name='菜单路径', max_length=128)
     component = models.CharField(verbose_name='组件', max_length=128)
-    icon = models.CharField(verbose_name='图标', max_length=128)
-    parent_id = models.BigIntegerField(verbose_name='父级菜单id', blank=True, null=True)
-    order_num = models.IntegerField(verbose_name='排序', blank=True, null=True)
-    is_hidden = models.BooleanField(verbose_name='是否隐藏', default=False, choices=BaseModel.ENABLE_CONST)
+    icon = models.CharField(verbose_name='菜单icon', max_length=256)
+    parent_id = models.BigIntegerField(verbose_name='父菜单id', blank=True, null=True)
+    order_num = models.IntegerField(verbose_name='菜单排序', default=0)
+    is_hidden = models.SmallIntegerField(verbose_name='是否隐藏', choices=BaseModel.ENABLE_CONST, default=0)
 
     def __str__(self):
         return self.name
