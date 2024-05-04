@@ -19,10 +19,9 @@ def custom_update(instance: object, request: object) -> object:
             m2m_fields.append((attr, value))
         else:
             setattr(instance, attr, value)
-
-    default_write(instance, request)
     for attr, value in m2m_fields:
         # 关联多对多关系表，更新数据
         field = getattr(instance, attr)
         field.set(value)
+    default_write(instance, request)
     return instance
