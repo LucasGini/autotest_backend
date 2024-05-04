@@ -28,6 +28,9 @@ from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, D
 from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
 from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY, ReportStatus
+from django_filters import rest_framework as filters
+from rest_framework.filters import OrderingFilter
+from apps.cases.filters import TestProjectFilter
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -37,7 +40,9 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
 
     queryset = TestCase.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter)
     serializer_class = ListTestCaseSerializer
+    filterset_fields = ('id', )
 
     def get_serializer_class(self):
         """
@@ -171,7 +176,9 @@ class ProjectsInfoModelViewSet(CustomModelViewSet):
     """
     queryset = ProjectsInfo.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter)
     serializer_class = ListProjectsInfoSerializer
+    filterset_class = TestProjectFilter
 
     def get_serializer_class(self):
         if self.action == 'list':

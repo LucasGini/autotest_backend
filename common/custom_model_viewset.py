@@ -39,11 +39,13 @@ class CustomModelViewSet(ModelViewSet):
         return CustomResponse(serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', True)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial, context={'request': request})
-        serializer.is_valid()
-        self.perform_update(serializer)
+        if serializer.is_valid():
+            self.perform_update(serializer)
+        else:
+            return CustomResponse(serializer.error, code=500, msg='error', status=status.HTTP_200_OK)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
