@@ -201,7 +201,7 @@ class SetattrPublicTestCase:
             case_info.header = data.get('header', {})
             case_info.param = data.get('param', {})
             case_info.body = data.get('body', {})
-            case_info.verify = data.get('verify', [])
+            case_info.assertion = data.get('assertion', [])
             case_info.fetch = data.get('fetch', [])
             case_info.dependent = data.get('dependent', {})
         else:

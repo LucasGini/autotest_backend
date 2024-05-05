@@ -2,7 +2,7 @@ from typing import Dict, List, Text
 from pydantic import BaseModel, HttpUrl
 
 
-Verify = List[Dict[Text, Dict[Text, Text]]]
+Assertion = List[Dict[Text, Dict[Text, Text]]]
 Fetch = List[Dict[Text, Text]]
 
 
@@ -27,7 +27,7 @@ class CaseInfo(BaseModel):
     # 请求数据
     body: Dict = {}
     # 断言规则
-    verify: Verify = []
+    assertion: Assertion = []
     # 取值逻辑
     fetch: Fetch = []
     # 自定义函数

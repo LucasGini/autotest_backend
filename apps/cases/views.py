@@ -23,14 +23,14 @@ from common.utils.default_write import default_write
 from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerializer, ListProjectsInfoSerializer,
                                     CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
                                     ListDependentMethodsSerializer, CreateDependentMethodsSerializer,
-                                    TestReportSerializer)
+                                    TestReportSerializer, UpdateProjectsInfoSerializer)
 from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
 from execute.setattr_public_test import SetattrPublicTestCase
 from apps.cases.task import run_case
 from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY, ReportStatus
 from django_filters import rest_framework as filters
 from rest_framework.filters import OrderingFilter
-from apps.cases.filters import TestProjectFilter
+from apps.cases.filters import TestProjectFilter, TestCaseFilter
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -40,9 +40,9 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
 
     queryset = TestCase.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
-    filter_backends = (filters.DjangoFilterBackend, OrderingFilter)
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter, SearchFilter)
     serializer_class = ListTestCaseSerializer
-    filterset_fields = ('id', )
+    filterset_class = TestCaseFilter
 
     def get_serializer_class(self):
         """
@@ -176,15 +176,18 @@ class ProjectsInfoModelViewSet(CustomModelViewSet):
     """
     queryset = ProjectsInfo.objects.filter(enable_flag=1)
     pagination_class = GeneralPage
-    filter_backends = (filters.DjangoFilterBackend, OrderingFilter)
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter, SearchFilter)
     serializer_class = ListProjectsInfoSerializer
     filterset_class = TestProjectFilter
+    search_fields = ('project_name', )
 
     def get_serializer_class(self):
         if self.action == 'list':
             return self.serializer_class
-        if self.action == 'create' or self.action == 'update':
+        if self.action == 'create':
             return CreateProjectsInfoSerializer
+        if self.action == 'update':
+            return UpdateProjectsInfoSerializer
         else:
             return self.serializer_class
 
