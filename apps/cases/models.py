@@ -31,7 +31,7 @@ class TestCase(BaseModel):
     priority = models.SmallIntegerField(verbose_name='优先级', choices=PRIORITY_CODE)
     method = models.SmallIntegerField(verbose_name='请求方法', choices=METHOD_CODE)
     path = models.CharField(verbose_name='路径', max_length=256)
-    data = models.TextField(verbose_name='请求数据')
+    data = models.JSONField(verbose_name='请求数据')
 
     def __str__(self):
         return self.case_name

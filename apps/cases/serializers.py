@@ -8,17 +8,47 @@ from common.custom_model_serializer import CustomModelSerializer
 
 class ListProjectsInfoSerializer(CustomModelSerializer):
     """
-    前置条件表序列化器
+    测试项目表查询序列化器
     """
+    responsible = serializers.SerializerMethodField()
+
+    def get_responsible(self, obj):
+        """
+        responsible字段方法
+        将用户名返回给前端
+        :return:
+        """
+        return obj.responsible.username
 
     class Meta:
         model = ProjectsInfo
         fields = '__all__'
 
 
+class UpdateProjectsInfoSerializer(CustomModelSerializer):
+    """
+    测试项目表更新序列化器
+    """
+
+    responsible = serializers.SerializerMethodField()
+
+    def get_responsible(self, obj):
+        """
+        responsible字段方法
+        将用户名转为id
+        :return:
+        """
+        print(obj.responsible)
+        return obj.responsible.username
+
+    class Meta:
+        model = ProjectsInfo
+        exclude = ('enable_flag', 'created_by', 'updated_by')
+
+
 class CreateProjectsInfoSerializer(CustomModelSerializer):
     """
-    前置条件表序列化器
+    测试项目表新增序列化器
     """
 
     class Meta:
@@ -126,6 +156,7 @@ class CreateTestSuiteSerializer(CustomModelSerializer):
     """
     测试套件序创建列化器
     """
+
     class Meta:
         model = TestSuite
         exclude = ('enable_flag', 'created_by', 'updated_by')
@@ -168,7 +199,3 @@ class TestReportSerializer(CustomModelSerializer):
     class Meta:
         model = TestReport
         exclude = ('report',)
-
-
-
-
