@@ -1,16 +1,17 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from apps.basics.filters import TestEnvFilter
-from apps.basics.models import TestEnv, SystemMenu
+from apps.basics.filters import TestEnvFilter, CategoryConfigFilter
+from apps.basics.models import TestEnv, SystemMenu, CategoryConfig
 from apps.basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers, ListSystemMenuSerializers, \
-    CreateSystemMenuSerializers
+    CreateSystemMenuSerializers, SearchCategoryConfigSerializers, CreateCategoryConfigSerializers
 from common.custom_model_viewset import CustomModelViewSet
 from common.custom_response import CustomResponse
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters import rest_framework as filters
+from collections import OrderedDict
 
 
 class TestEnvModelViewSet(CustomModelViewSet):
@@ -135,3 +136,79 @@ class SystemMenuModelViewSet(CustomModelViewSet):
         except Exception as e:
             raise APIException(f'删除菜单失败：{e}')
         return CustomResponse(code=204, msg='OK', status=status.HTTP_204_NO_CONTENT)
+
+
+class CategoryConfigModelViewSet(CustomModelViewSet):
+    """
+    类型配置表视图集
+    """
+
+    queryset = CategoryConfig.objects.filter(enable_flag=1)
+    serializer_class = SearchCategoryConfigSerializers
+    filter_backends = (filters.DjangoFilterBackend, OrderingFilter, SearchFilter)
+    filterset_class = CategoryConfigFilter
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return self.serializer_class
+        elif self.action == 'create' or self.action == 'update':
+            return CreateCategoryConfigSerializers
+        else:
+            return self.serializer_class
+
+    def recursive_configuration_tree(self, configurations, parent_id=0):
+        """
+        递归生成配置树
+        :param configurations: serializer.data
+        :param parent_id:
+        :return:
+        """
+        config_tree = []
+        for configuration in configurations:
+            if configuration.get('category_parent_id') == parent_id:
+                children = self.recursive_configuration_tree(configurations, configuration.get('id'))
+                config_od = OrderedDict([
+                    ('id', configuration.get('id')),
+                    ('category_group', configuration.get('category_group')),
+                    ('category_name', configuration.get('category_name')),
+                    ('category_code', configuration.get('category_code')),
+                    ('category_description', configuration.get('category_description')),
+                    ('category_parent_id', configuration.get('category_parent_id')),
+                    ('sort_number', configuration.get('sort_number')),
+                    ('readonly', configuration.get('readonly')),
+                    ('children', children),
+                    ('enable_flag', configuration.get('enable_flag')),
+                    ('created_by', configuration.get('created_by')),
+                    ('created_date', configuration.get('created_date')),
+                    ('updated_by', configuration.get('updated_by')),
+                    ('updated_date', configuration.get('updated_date')),
+                ])
+                config_tree.append(config_od)
+        return config_tree
+
+    def list(self, request, *args, **kwargs):
+        """
+        查询类型配置列表或树
+        searchType=tree 查询树, 不传获取传其他查询列表
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        params = request.query_params
+        search_type = params.get('searchType', None)
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(queryset, many=True)
+        if search_type and search_type.lower() == 'tree':
+            if isinstance(serializer.data, list):
+                data = self.recursive_configuration_tree(serializer.data)
+            else:
+                data = serializer.data
+        else:
+            data = serializer.data
+        print(data)
+        return CustomResponse(data, code=200, msg='OK', status=status.HTTP_200_OK)
