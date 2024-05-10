@@ -1,4 +1,4 @@
-from apps.basics.models import TestEnv, SystemMenu
+from apps.basics.models import TestEnv, SystemMenu, CategoryConfig
 from common.custom_model_serializer import CustomModelSerializer
 
 
@@ -39,4 +39,24 @@ class CreateSystemMenuSerializers(CustomModelSerializer):
 
     class Meta:
         model = SystemMenu
+        exclude = ('enable_flag', 'created_by', 'updated_by')
+
+
+class SearchCategoryConfigSerializers(CustomModelSerializer):
+    """
+    类型配置表查询序列化器
+    """
+
+    class Meta:
+        model = CategoryConfig
+        fields = '__all__'
+
+
+class CreateCategoryConfigSerializers(CustomModelSerializer):
+    """
+    类型配置表创建更新序列化器
+    """
+
+    class Meta:
+        model = CategoryConfig
         exclude = ('enable_flag', 'created_by', 'updated_by')
