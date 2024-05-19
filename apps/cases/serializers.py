@@ -88,12 +88,16 @@ class ListTestCaseSerializer(CustomModelSerializer):
         precondition字段方法
         """
         try:
-            precondition = Precondition.objects.filter(case_id=obj.id, enable_flag=1)
+            precondition = Precondition.objects.get(case_id=obj.id, enable_flag=1)
         except Precondition.DoesNotExist:
-            precondition = []
+            return []
+        if precondition:
+            case_list = precondition.precondition_case
+            try:
+                precondition = eval(case_list)
+            except Exception as e:
+                return []
             return precondition
-        serializer = ListPreconditionSerializer(precondition, many=True)
-        return serializer.data
 
     class Meta:
         model = TestCase
@@ -105,7 +109,7 @@ class CreateTestCaseSerializer(CustomModelSerializer):
     新增测试用例序列化器
     """
 
-    precondition = CreatePreconditionSerializer(partial=True, required=False)
+    precondition = serializers.JSONField(default=list)
 
     class Meta:
         model = TestCase
@@ -123,10 +127,9 @@ class CreateTestCaseSerializer(CustomModelSerializer):
             default_write(instance, request)
             # 新增前置条件
             precondition_data = validated_data.get('precondition', None)
-            precondition_case = precondition_data.get('precondition_case', None)
-            if precondition_data and precondition_case != '[]':
+            if precondition_data:
                 precondition = Precondition()
-                precondition.precondition_case = precondition_case
+                precondition.precondition_case = precondition_data
                 precondition.case = instance
                 default_write(precondition, request)
         except Exception as e:

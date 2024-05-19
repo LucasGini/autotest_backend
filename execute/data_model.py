@@ -3,7 +3,7 @@ from pydantic import BaseModel, HttpUrl
 
 
 Assertion = List[Dict[Text, Dict[Text, Text]]]
-Fetch = List[Dict[Text, Text]]
+Fetch = Dict[Text, Text]
 
 
 class CaseInfo(BaseModel):
@@ -29,7 +29,7 @@ class CaseInfo(BaseModel):
     # 断言规则
     assertion: Assertion = []
     # 取值逻辑
-    fetch: Fetch = []
+    fetch: Fetch = {}
     # 自定义函数
     functions: Dict = {}
     # 依赖参数
