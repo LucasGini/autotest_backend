@@ -28,11 +28,10 @@ class TestBase(unittest.TestCase):
         :return:
         """
 
-        if isinstance(fetch, list) is False:
-            raise Exception('取值规则不为list类型')
-        for f in fetch:
-            for key, f_path in f.items():
-                self.var[key] = jsonpath.jsonpath(response_json, f_path)
+        if isinstance(fetch, dict) is False:
+            raise Exception('取值规则不为dict类型')
+        for key in fetch.keys():
+            self.var[key] = jsonpath.jsonpath(response_json, fetch[key])
 
     def assert_verify(self, rules, response_json):
         """
