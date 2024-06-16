@@ -58,10 +58,13 @@ class ListCreateTestCaseView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         """
         查询列表
+        searchType=all 查询所有数据，不分页
         """
+        params = request.query_params
+        search_type = params.get('searchType', None)
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-        if page is not None:
+        if page is not None and search_type != 'all':
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
@@ -134,12 +137,10 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
             try:
                 # 查询是否存在前置条件对象，不存在则新增，存在则修改
                 precondition = Precondition.objects.get(case=instance.id)
-                if isinstance(precondition_data, dict):
-                    for attr, value in precondition_data.items():
-                        setattr(precondition, attr, value)
+                precondition.precondition_case = precondition_data
             except Precondition.DoesNotExist:
                 precondition = Precondition()
-                precondition.precondition_case = precondition_data.get('precondition_case', None)
+                precondition.precondition_case = precondition_data.get('precondition', None)
                 precondition.case = instance
             default_write(precondition, request)
             default_write(instance, request)
