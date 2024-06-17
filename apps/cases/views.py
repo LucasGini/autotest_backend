@@ -1,4 +1,5 @@
 import copy
+import time
 import types
 import inspect
 from django.db import transaction
@@ -140,7 +141,7 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
                 precondition.precondition_case = precondition_data
             except Precondition.DoesNotExist:
                 precondition = Precondition()
-                precondition.precondition_case = precondition_data.get('precondition', None)
+                precondition.precondition_case = precondition_data
                 precondition.case = instance
             default_write(precondition, request)
             default_write(instance, request)
