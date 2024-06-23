@@ -38,9 +38,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
-    'apps.users',
-    'apps.basics',
-    'apps.cases',
+    'users',
+    'basics',
+    'cases',
+    'kafka_app',
 ]
 
 MIDDLEWARE = [
@@ -155,6 +156,8 @@ CELERY_RESULT_SERIALIZER = 'pickle'
 
 CELERY_ACCEPT_CONTENT = ['pickle', 'json']
 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 # 任务结果过期时间，秒
 CELERY_TASK_RESULT_EXPIRES = 60 * 60 * 24
 
@@ -171,6 +174,13 @@ CACHES = {
             'PASSWORD': os.getenv('REDIS_PASSWORD', '')
         }
     }
+}
+
+# 配置kafka
+KAFKA_SETTINGS = {
+    'bootstrap.servers': 'localhost:9092',
+    'group.id': 'autotest',
+    'auto.offset.reset': 'earliest'
 }
 
 # 配置允许跨域的地址

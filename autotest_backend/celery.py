@@ -12,3 +12,8 @@ celery_app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # 自动查找和注册所有已定义的 Celery 任务
 celery_app.autodiscover_tasks()
+
+
+@celery_app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')

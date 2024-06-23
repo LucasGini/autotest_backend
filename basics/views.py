@@ -1,9 +1,9 @@
 from django.db import transaction
 from rest_framework import status
 from rest_framework.exceptions import APIException
-from apps.basics.filters import TestEnvFilter, CategoryConfigFilter
-from apps.basics.models import TestEnv, SystemMenu, CategoryConfig
-from apps.basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers, ListSystemMenuSerializers, \
+from basics.filters import TestEnvFilter, CategoryConfigFilter
+from basics.models import TestEnv, SystemMenu, CategoryConfig
+from basics.serializers import ListTestEnvSerializers, CreateTestEnvSerializers, ListSystemMenuSerializers, \
     CreateSystemMenuSerializers, SearchCategoryConfigSerializers, CreateCategoryConfigSerializers
 from common.custom_model_viewset import CustomModelViewSet
 from common.custom_response import CustomResponse

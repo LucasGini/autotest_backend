@@ -3,7 +3,7 @@ import threading
 import unittest
 from execute.build_methods import create_dynamic_module, get_all_function_from_module
 from execute.data_model import CaseInfo
-from apps.cases.models import Precondition, TestCase, DependentMethods
+from cases.models import Precondition, TestCase, DependentMethods
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST
 from execute.data_handling import str_template_insert

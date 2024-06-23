@@ -1,37 +1,36 @@
 import copy
-import time
+import json
 import types
 import inspect
 from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django_redis import get_redis_connection
-from rest_framework import generics
-from rest_framework import status
-from rest_framework import views
+from rest_framework import generics, status, views
 from rest_framework.exceptions import NotFound, APIException
-from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
-from apps.cases.request.case_request_model import ExecuteRequestModel, AsyncExecuteRequestModel
+from cases.request.case_request_model import ExecuteRequestModel, AsyncExecuteRequestModel
 from common.custom_exception import ParamException
-from apps.basics.models import TestEnv
+from basics.models import TestEnv
 from common.utils.api_execute import case_execute, project_execute, suite_execute
 from common.utils.custom_update import custom_update
 from common.general_page import GeneralPage
 from common.custom_response import CustomResponse
 from common.custom_model_viewset import CustomModelViewSet
 from common.utils.default_write import default_write
-from apps.cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerializer, ListProjectsInfoSerializer,
-                                    CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
-                                    ListDependentMethodsSerializer, CreateDependentMethodsSerializer,
-                                    TestReportSerializer, UpdateProjectsInfoSerializer)
-from apps.cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
+from cases.serializers import (ListTestCaseSerializer, CreateTestCaseSerializer, ListProjectsInfoSerializer,
+                               CreateProjectsInfoSerializer, ListTestSuiteSerializer, CreateTestSuiteSerializer,
+                               ListDependentMethodsSerializer, CreateDependentMethodsSerializer,
+                               TestReportSerializer, UpdateProjectsInfoSerializer)
+from cases.models import TestCase, TestSuite, Precondition, ProjectsInfo, DependentMethods, TestReport
 from execute.setattr_public_test import SetattrPublicTestCase
-from apps.cases.task import run_case
+from cases.task import run_case
 from common.const.case_const import ExecuteType, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY, ReportStatus
 from django_filters import rest_framework as filters
 from rest_framework.filters import OrderingFilter
-from apps.cases.filters import TestProjectFilter, TestCaseFilter
+from cases.filters import TestProjectFilter, TestCaseFilter
+from common.const.case_const import KAFKA_PROJECT_DELETED_TOPIC
+from kafka_app.kafka_producer import KafkaProducerBase
 
 
 class ListCreateTestCaseView(generics.ListCreateAPIView):
@@ -192,6 +191,21 @@ class ProjectsInfoModelViewSet(CustomModelViewSet):
             return UpdateProjectsInfoSerializer
         else:
             return self.serializer_class
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        重新删除方法
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        instance = self.get_object()
+        project_id = instance.id
+        self.perform_destroy(instance)
+        kafka_producer = KafkaProducerBase()
+        kafka_producer.send_message(KAFKA_PROJECT_DELETED_TOPIC, json.dumps({'projectId': project_id}))
+        return CustomResponse(data=[], code=204, msg='OK', status=status.HTTP_204_NO_CONTENT)
 
 
 class TestSuiteModelViewSet(CustomModelViewSet):

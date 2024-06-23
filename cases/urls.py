@@ -1,8 +1,8 @@
 from django.urls import path, include
-from apps.cases.views import (ListCreateTestCaseView, AsyncExecuteView, ExecuteView,
-                              RetrieveUpdateDestroyTestCaseAPIView, TestReportModelViewSet,
-                              ProjectsInfoModelViewSet, TestSuiteModelViewSet, DependentMethodsViewSet,
-                              DownloadReportView)
+from cases.views import (ListCreateTestCaseView, AsyncExecuteView, ExecuteView,
+                         RetrieveUpdateDestroyTestCaseAPIView, TestReportModelViewSet,
+                         ProjectsInfoModelViewSet, TestSuiteModelViewSet, DependentMethodsViewSet,
+                         DownloadReportView)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter(trailing_slash=False)

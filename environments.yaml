@@ -1,87 +1,84 @@
 name: autotest_backend
 channels:
   - conda-forge
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
   - defaults
 dependencies:
-  - aiohttp=3.8.5=py310h2bbff1b_0
-  - aiosignal=1.2.0=pyhd8ed1ab_0
-  - asgiref=3.5.2=pyhd8ed1ab_0
-  - async-timeout=4.0.2=pyhd8ed1ab_0
-  - attrs=23.1.0=pyh71513ae_1
-  - backports=1.1=pyhd3eb1b0_0
-  - backports.zoneinfo=0.2.1=py310h5588dad_8
-  - brotli-python=1.0.9=py310hd77b12b_7
-  - bzip2=1.0.8=hcfcfb64_5
-  - c-ares=1.19.1=hcfcfb64_0
-  - ca-certificates=2023.12.12=haa95532_0
-  - certifi=2024.2.2=py310haa95532_0
-  - cffi=1.16.0=py310h2bbff1b_0
-  - charset-normalizer=2.0.4=pyhd8ed1ab_0
-  - cryptography=41.0.3=py310h89fc84f_0
-  - frozenlist=1.4.0=py310h2bbff1b_0
-  - gevent=23.9.1=py310h2bbff1b_0
-  - greenlet=3.0.1=py310hd77b12b_0
-  - icu=58.2=ha925a31_3
-  - jansson=2.14=hcfcfb64_1
-  - libffi=3.4.4=hd77b12b_0
-  - libiconv=1.17=hcfcfb64_2
-  - libsqlite=3.41.2=hcfcfb64_1
-  - libuv=1.44.2=hcfcfb64_1
-  - libxml2=2.10.4=hc3477c8_0
-  - libzlib=1.2.13=hcfcfb64_5
-  - llvm-openmp=14.0.6=h91493d7_0
-  - multidict=6.0.2=py310h2bbff1b_0
-  - mysql-connector-c=6.1.11=h1537add_1008
-  - openssl=3.0.13=h2bbff1b_0
-  - pcre=8.45=h0e60522_0
-  - pip=23.3.2=pyhd8ed1ab_0
-  - pycparser=2.21=pyhd8ed1ab_0
-  - pydantic=1.10.12=py310h2bbff1b_1
-  - pyopenssl=23.2.0=pyhd8ed1ab_1
-  - pysocks=1.7.1=pyh0701188_6
-  - python=3.10.13=he1021f5_0
-  - python_abi=3.10=2_cp310
-  - setuptools=68.0.0=pyhd8ed1ab_0
-  - sqlite=3.41.2=hcfcfb64_1
-  - sqlparse=0.4.4=pyhd8ed1ab_0
-  - tk=8.6.12=h8ffe710_0
-  - typing-extensions=4.7.1=hd8ed1ab_0
-  - typing_extensions=4.7.1=pyha770c72_0
-  - ucrt=10.0.22621.0=h57928b3_0
-  - vc=14.3=hcf57466_18
-  - vc14_runtime=14.38.33130=h82b7239_18
-  - vs2015_runtime=14.38.33130=hcb4865c_18
-  - wheel=0.41.2=pyhd8ed1ab_0
-  - win_inet_pton=1.1.0=pyhd8ed1ab_6
-  - xz=5.4.2=h8cc25b3_0
-  - yaml=0.2.5=h8ffe710_2
-  - yarl=1.8.1=py310h2bbff1b_0
-  - zlib=1.2.13=hcfcfb64_5
-  - zope=1.0=py310haa95532_1
-  - zope.event=5.0=pyhd8ed1ab_0
-  - zope.interface=5.4.0=py310h2bbff1b_0
+  - aiohttp=3.8.5=py310h6c40b1e_0
+  - aiosignal=1.2.0=pyhd3eb1b0_0
+  - async-timeout=4.0.2=py310hecd8cb5_0
+  - attrs=23.1.0=py310hecd8cb5_0
+  - brotli-python=1.0.9=py310he9d5cce_7
+  - bzip2=1.0.8=h1de35cc_0
+  - c-ares=1.19.1=h6c40b1e_0
+  - ca-certificates=2023.12.12=hecd8cb5_0
+  - certifi=2023.11.17=py310hecd8cb5_0
+  - cffi=1.16.0=py310h6c40b1e_0
+  - charset-normalizer=2.0.4=pyhd3eb1b0_0
+  - cryptography=41.0.3=py310ha2381d6_0
+  - frozenlist=1.4.0=py310h6c40b1e_0
+  - gettext=0.21.0=he85b6c0_1
+  - gevent=23.9.1=py310h6c40b1e_0
+  - greenlet=3.0.1=py310hcec6c5f_0
+  - gunicorn=20.1.0=py310hecd8cb5_0
+  - icu=58.2=h0a44026_3
+  - jansson=2.14=hb7f2c08_1
+  - libcxx=14.0.6=h9765a3e_0
+  - libev=4.33=h9ed2024_1
+  - libffi=3.4.4=hecd8cb5_0
+  - libiconv=1.17=hd75f5a5_2
+  - libuv=1.44.2=h6c40b1e_0
+  - libxml2=2.10.4=h930c0e2_0
+  - llvm-openmp=14.0.6=h0dcd299_0
+  - multidict=6.0.2=py310hca72f7f_0
+  - mysql-connector-c=6.1.11=hccea1a4_1
+  - mysqlclient=2.0.3=py310he9d5cce_1
+  - ncurses=6.4=hcec6c5f_0
+  - openssl=1.1.1w=hca72f7f_0
+  - pcre=8.45=he49afe7_0
+  - pip=23.3=py310hecd8cb5_0
+  - pycparser=2.21=pyhd3eb1b0_0
+  - pydantic=1.10.12=py310h6c40b1e_1
+  - pyopenssl=23.2.0=py310hecd8cb5_0
+  - pysocks=1.7.1=py310hecd8cb5_0
+  - python=3.10.13=h218abb5_0
+  - readline=8.2=hca72f7f_0
+  - setuptools=68.0.0=py310hecd8cb5_0
+  - sqlite=3.41.2=h6c40b1e_0
+  - sqlparse=0.4.4=py310hecd8cb5_0
+  - supervisor=4.2.2=py310hecd8cb5_0
+  - tk=8.6.12=h5d9f67b_0
+  - typing-extensions=4.7.1=py310hecd8cb5_0
+  - typing_extensions=4.7.1=py310hecd8cb5_0
+  - uwsgi=2.0.21=py310h301248c_2
+  - wheel=0.41.2=py310hecd8cb5_0
+  - xz=5.4.2=h6c40b1e_0
+  - yaml=0.2.5=h0d85af4_2
+  - yarl=1.8.1=py310hca72f7f_0
+  - zlib=1.2.13=h4dc903c_0
+  - zope=1.0=py310hecd8cb5_1
+  - zope.event=5.0=py310hecd8cb5_0
+  - zope.interface=5.4.0=py310hca72f7f_0
   - pip:
       - amqp==5.2.0
+      - asgiref==3.8.1
       - beautifulreport==0.1.3
       - billiard==4.2.0
-      - celery==5.4.0rc1
+      - celery==5.3.6
       - chardet==3.0.4
       - click==8.1.7
       - click-didyoumean==0.3.0
       - click-plugins==1.1.1
       - click-repl==0.3.0
-      - colorama==0.4.6
+      - confluent-kafka_app==2.4.0
       - ddt==1.7.0
-      - django==4.1
+      - django==5.0.4
+      - django-cors-headers==4.3.1
+      - django-filter==24.2
       - django-redis==5.4.0
       - djangorestframework==3.14.0
       - dnspython==2.4.2
       - eventlet==0.33.3
       - exceptiongroup==1.2.0
-      - gunicorn==20.1.0
       - htmlreport==2.4.0
       - idna==2.10
       - iniconfig==2.0.0
@@ -89,10 +86,11 @@ dependencies:
       - jsonpath==0.82.2
       - kombu==5.3.4
       - markupsafe==2.1.3
-      - mysqlclient==2.2.4
       - packaging==23.2
       - pluggy==1.3.0
+      - prettytable==3.10.0
       - prompt-toolkit==3.0.41
+      - pyecharts==2.0.5
       - pymysql==1.1.0
       - pytest==7.4.3
       - python-dateutil==2.8.2
@@ -100,8 +98,8 @@ dependencies:
       - pyyaml==5.3.1
       - redis==5.0.1
       - requests==2.24.0
+      - simplejson==3.19.2
       - six==1.16.0
-      - supervisor==4.2.2
       - tomli==2.0.1
       - tzdata==2023.3
       - unittestreport==1.5.1
@@ -109,4 +107,4 @@ dependencies:
       - vine==5.1.0
       - wcwidth==0.2.12
       - wrapt==1.16.0
-prefix: D:\ProgramData\miniconda3\envs\autotest_backend
+prefix: /Users/lidongqiang/opt/anaconda3/envs/autotest_backend

@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from apps.cases.models import ProjectsInfo, TestCase
+from cases.models import ProjectsInfo, TestCase
 
 
 class TestProjectFilter(filters.FilterSet):

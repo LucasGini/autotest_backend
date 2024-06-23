@@ -1,7 +1,7 @@
 from django.db.models import Q
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
-from apps.cases.models import TestCase, TestSuite
+from cases.models import TestCase, TestSuite
 from common.custom_exception import ParamException
 
 

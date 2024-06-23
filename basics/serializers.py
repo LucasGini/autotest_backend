@@ -1,4 +1,4 @@
-from apps.basics.models import TestEnv, SystemMenu, CategoryConfig
+from basics.models import TestEnv, SystemMenu, CategoryConfig
 from common.custom_model_serializer import CustomModelSerializer
 
 

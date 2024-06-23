@@ -1,5 +1,5 @@
 import inspect
-from apps.users.models import AuthUser
+from users.models import AuthUser
 
 
 def caller_function_name():

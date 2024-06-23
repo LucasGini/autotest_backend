@@ -41,5 +41,9 @@ SUCCESS_COUNT_REDIS_KEY = 'success_count_of_report_id_{}'
 # test_report.executed_count Redis Key
 EXECUTED_COUNT_REDIS_KEY = 'executed_count_of_report_id_{}'
 
+# kafka topic
+# 项目删除后触发topic
+KAFKA_PROJECT_DELETED_TOPIC = 'kafka_project_deleted_topic'
+
 if __name__ == '__main__':
     print(ExecuteType.CASE.value)

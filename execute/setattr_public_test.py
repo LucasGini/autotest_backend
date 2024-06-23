@@ -6,7 +6,7 @@ import unittest
 import typing
 from django.utils import timezone
 from django_redis import get_redis_connection
-from apps.cases.models import Precondition, TestCase, DependentMethods, TestReport
+from cases.models import Precondition, TestCase, DependentMethods, TestReport
 from common.const.basic_const import AGREEMENT_CONST
 from common.const.case_const import METHOD_CONST, EXECUTED_COUNT_REDIS_KEY, SUCCESS_COUNT_REDIS_KEY
 from execute.build_methods import create_dynamic_module, get_all_function_from_module

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.basics.models import TestEnv, CategoryConfig, SystemMenu
+from basics.models import TestEnv, CategoryConfig, SystemMenu
 
 
 @admin.register(TestEnv)

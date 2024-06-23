@@ -1,5 +1,5 @@
 from django.urls import path, include
-from apps.basics.views import TestEnvModelViewSet, SystemMenuModelViewSet, CategoryConfigModelViewSet
+from basics.views import TestEnvModelViewSet, SystemMenuModelViewSet, CategoryConfigModelViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter(trailing_slash=False)

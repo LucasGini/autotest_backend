@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from apps.basics import models
+from basics import models
 
 
 class TestEnvFilter(filters.FilterSet):

@@ -1,9 +1,9 @@
-from apps.users.serializers import AuthUserSerializer
-from apps.users.models import AuthUser
+from users.serializers import AuthUserSerializer
+from users.models import AuthUser
 from common.custom_model_viewset import CustomModelViewSet
 from common.general_page import GeneralPage
 from django_filters import rest_framework as filters
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.filters import SearchFilter
 
 
 class AuthUserViewSet(CustomModelViewSet):

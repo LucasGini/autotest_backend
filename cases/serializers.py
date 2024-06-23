@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.cases.models import TestCase, TestSuite, ProjectsInfo, Precondition, DependentMethods, TestReport
+from cases.models import TestCase, TestSuite, ProjectsInfo, Precondition, DependentMethods, TestReport
 from django.db import transaction
 from rest_framework.exceptions import APIException
 from common.utils.default_write import default_write
