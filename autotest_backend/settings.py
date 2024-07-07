@@ -150,11 +150,11 @@ CELERY_BROKER_URL = f"redis://:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('RED
 # backend配置，这里使用redis
 CELERY_RESULT_BACKEND = f"redis://:{os.getenv('REDIS_PASSWORD', '')}@{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_PORT', 6379)}/0"
 
-CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_TASK_SERIALIZER = 'json'
 
-CELERY_RESULT_SERIALIZER = 'pickle'
+CELERY_RESULT_SERIALIZER = 'json'
 
-CELERY_ACCEPT_CONTENT = ['pickle', 'json']
+CELERY_ACCEPT_CONTENT = [ 'json']
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 

@@ -6,8 +6,8 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - /home/app/redis/data:/data
-      - /home/app/redis/conf/redis.conf:/etc/redis/redis.conf
+      - ./redis/data:/data
+      - ./redis/conf/redis.conf:/etc/redis/redis.conf
     expose:
       - "6379"
     command:
