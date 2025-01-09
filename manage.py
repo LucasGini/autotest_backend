@@ -3,6 +3,8 @@
 import os
 import sys
 
+from kafka_app.consumer.kafka_consumer_base import KafkaConsumerBase
+
 
 def main():
     """Run administrative tasks."""
@@ -15,6 +17,8 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+    consumer = KafkaConsumerBase()
+    consumer.consume_messages()
     execute_from_command_line(sys.argv)
 
 
