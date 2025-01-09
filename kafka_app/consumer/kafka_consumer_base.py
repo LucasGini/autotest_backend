@@ -1,13 +1,23 @@
+import threading
 from confluent_kafka import KafkaException
 from kafka_app.kafka_consumer import KafkaConsumerABC
 
+
+def async_handle(f):
+    def wrapper(*args, **kwargs):
+        thr = threading.Thread(target=f, args=args, kwargs=kwargs)
+        thr.start()
+
+    return wrapper
 
 class KafkaConsumerBase(KafkaConsumerABC):
     """
     Kafka 消费者基础类
     """
 
-    def consume_messages(self):
+
+    @async_handle
+    def async_consume_messages(self):
         """
         消费消息
         :return:
@@ -30,6 +40,15 @@ class KafkaConsumerBase(KafkaConsumerABC):
             pass
         finally:
             consumer.close()
+
+    def consume_messages(self):
+        """
+        包装异步方法
+        :return:
+        """
+        self.async_consume_messages()
+
+
 
     def handler_message(self, msg):
         pass
