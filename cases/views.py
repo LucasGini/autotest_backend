@@ -136,7 +136,7 @@ class RetrieveUpdateDestroyTestCaseAPIView(generics.RetrieveUpdateDestroyAPIView
                 return CustomResponse(data=serializer.data, code=200, msg='OK', status=status.HTTP_200_OK)
             try:
                 # 查询是否存在前置条件对象，不存在则新增，存在则修改
-                precondition = Precondition.objects.get(case=instance.id)
+                precondition = Precondition.objects.get(case=instance.id, enable_flag=1)
                 precondition.precondition_case = precondition_data
             except Precondition.DoesNotExist:
                 precondition = Precondition()
